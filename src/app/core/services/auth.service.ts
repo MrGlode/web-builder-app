@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, of, throwError, delay, tap } from 'rxjs';
+import { Observable, of, throwError, delay, tap, finalize } from 'rxjs';
 import { User, LoginCredentials, LoginResponse, RegisterData, UserRole } from '../models/user.model';
 import { ConfigService } from './config.service';
 import { LoggerService } from './logger.service';
@@ -71,47 +71,42 @@ export class AuthService {
         this.loggerService.info('Attempting login for', credentials.email);
 
         if (this.configService.useMockApi) {
-            return this.mockLogin(credentials);
+            return this.mockLogin(credentials).pipe(
+                finalize(() => this.isLoadingSignal.set(false))
+            );
         }
 
         return this.http.post<LoginResponse>(`${this.configService.apiUrl}/auth/login`, credentials)
             .pipe(
                 tap(response => this.handleLoginSuccess(response)),
-                tap(() => this.isLoadingSignal.set(false))
+                finalize(() => this.isLoadingSignal.set(false))
             );
     }
 
     private mockLogin(credentials: LoginCredentials): Observable<LoginResponse> {
         this.loggerService.debug('Using mock login');
+        const user = this.MOCK_USERS.find(u => u.email === credentials.email);
 
-        return of(null).pipe(
+        if (!user || credentials.password !== 'password123') {
+            return throwError(() => ({ message: 'Invalid credentials' })).pipe(delay(500));
+        }
+
+        const response: LoginResponse = {
+            user: {
+                ...user,
+                lastLogin: new Date()
+            },
+            tokens: {
+                accessToken: 'mock_access_token_' + Date.now(),
+                refreshToken: 'mock_refresh_token_' + Date.now(),
+                expiresIn: 3600
+            }
+        };
+
+        return of(response).pipe(
             delay(800),
-            tap(() => {
-                const user = this.MOCK_USERS.find(u => u.email === credentials.email);
-
-                if (!user || credentials.password !== 'password123') {
-                    throw new Error('Invalid email or password');
-                }
-
-                const response: LoginResponse = {
-                    user: {
-                        ...user,
-                        lastLogin: new Date()
-                    },
-                    tokens: {
-                        accessToken: 'mock_access_token_' + Date.now(),
-                        refreshToken: 'mock_refresh_token_' + Date.now(),
-                        expiresIn: 3600
-                    }
-                };
-
-                this.handleLoginSuccess(response);
-            }),
-            tap(() => this.isLoadingSignal.set(false)),
-            delay(0),
-            tap(() => { }),
-            delay(0)
-        ) as any;
+            tap(() => this.handleLoginSuccess(response))
+        );
     }
 
     private handleLoginSuccess(response: LoginResponse) {
