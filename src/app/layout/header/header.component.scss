@@ -1,0 +1,342 @@
+@import '../../../styles/abstracts/variables';
+@import '../../../styles/abstracts/mixins';
+
+.header {
+  @include flex-between;
+  height: 64px;
+  padding: 0 $spacing-6;
+  background-color: $white;
+  border-bottom: 1px solid $gray-200;
+  position: relative;
+  z-index: $z-index-sticky + 1;
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: $spacing-4;
+  }
+
+  &__menu-btn {
+    @include flex-center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background-color: transparent;
+    color: $gray-600;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all $transition-base;
+
+    &:hover {
+      background-color: $gray-100;
+      color: $gray-900;
+    }
+
+    &:focus-visible {
+      @include focus-ring($primary);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    color: $primary;
+  }
+
+  &__title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $gray-900;
+
+    @media (max-width: $breakpoint-sm) {
+      display: none;
+    }
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+  }
+
+  &__action {
+    @include flex-center;
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background-color: transparent;
+    color: $gray-600;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all $transition-base;
+
+    &:hover {
+      background-color: $gray-100;
+      color: $gray-900;
+    }
+
+    &:focus-visible {
+      @include focus-ring($primary);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  &__badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 $spacing-1;
+    @include flex-center;
+    background-color: $danger;
+    color: $white;
+    font-size: 11px;
+    font-weight: $font-weight-bold;
+    border-radius: $radius-full;
+    border: 2px solid $white;
+  }
+
+  &__user-wrapper {
+    position: relative;
+    margin-left: $spacing-2;
+  }
+
+  &__user {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    padding: $spacing-2 $spacing-3;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: background-color $transition-base;
+    border: none;
+    background-color: transparent;
+
+    &:hover {
+      background-color: $gray-100;
+    }
+
+    &:focus-visible {
+      @include focus-ring($primary);
+    }
+  }
+
+  &__avatar {
+    @include flex-center;
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-full;
+    background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
+    color: $white;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    flex-shrink: 0;
+  }
+
+  &__username {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $gray-700;
+
+    @media (max-width: $breakpoint-md) {
+      display: none;
+    }
+  }
+
+  &__chevron {
+    flex-shrink: 0;
+    transition: transform $transition-base;
+    color: $gray-500;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+
+    @media (max-width: $breakpoint-md) {
+      display: none;
+    }
+  }
+
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + $spacing-2);
+    right: 0;
+    width: 280px;
+    background-color: $white;
+    border-radius: $radius-xl;
+    box-shadow: $shadow-xl;
+    border: 1px solid $gray-200;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all $transition-base;
+    z-index: $z-index-dropdown;
+
+    &--open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+  }
+
+  &__dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    padding: $spacing-4;
+  }
+
+  &__dropdown-avatar {
+    @include flex-center;
+    width: 48px;
+    height: 48px;
+    border-radius: $radius-full;
+    background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
+    color: $white;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    flex-shrink: 0;
+  }
+
+  &__dropdown-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__dropdown-name {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $gray-900;
+    @include truncate-text;
+  }
+
+  &__dropdown-email {
+    font-size: $font-size-xs;
+    color: $gray-600;
+    margin-top: $spacing-1;
+    @include truncate-text;
+  }
+
+  &__dropdown-role {
+    display: inline-block;
+    margin-top: $spacing-1;
+    padding: 2px $spacing-2;
+    font-size: 10px;
+    font-weight: $font-weight-semibold;
+    color: $primary;
+    background-color: $primary-50;
+    border-radius: $radius-full;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__dropdown-divider {
+    height: 1px;
+    background-color: $gray-200;
+    margin: 0 $spacing-4;
+  }
+
+  &__dropdown-menu {
+    padding: $spacing-2 0;
+  }
+
+  &__dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    width: 100%;
+    padding: $spacing-3 $spacing-4;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $gray-700;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all $transition-base;
+    text-align: left;
+
+    &:hover {
+      background-color: $gray-50;
+      color: $gray-900;
+    }
+
+    &:focus-visible {
+      outline: none;
+      background-color: $primary-50;
+      color: $primary;
+    }
+
+    &--danger {
+      color: $danger;
+
+      &:hover {
+        background-color: $danger-light;
+        color: $danger-dark;
+      }
+
+      &:focus-visible {
+        background-color: $danger-light;
+        color: $danger-dark;
+      }
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__login-btn {
+    @include flex-center;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-4;
+    background-color: $primary;
+    color: $white;
+    border: none;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+    transition: all $transition-base;
+
+    &:hover {
+      background-color: $primary-dark;
+    }
+
+    &:focus-visible {
+      box-shadow: 0 0 0 3px rgba($primary, 0.2);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    @media (max-width: $breakpoint-sm) {
+      span {
+        display: none;
+      }
+
+      padding: $spacing-2;
+      width: 40px;
+      height: 40px;
+    }
+  }
+
+  &__backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: $z-index-dropdown - 1;
+  }
+}

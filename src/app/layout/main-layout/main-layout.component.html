@@ -1,0 +1,26 @@
+<div class="layout" [class.layout--sidebar-collapsed]="sidebarCollapsed()">
+  <!-- Header -->
+  <app-header 
+    class="layout__header"
+    (toggleSidebar)="toggleSidebar()">
+  </app-header>
+
+  <!-- Sidebar -->
+  <app-sidebar 
+    class="layout__sidebar"
+    [collapsed]="sidebarCollapsed()">
+  </app-sidebar>
+
+  <!-- Backdrop mobile -->
+  <div 
+    class="layout__backdrop"
+    [class.layout__backdrop--visible]="!sidebarCollapsed()"
+    (click)="toggleSidebar()"
+    aria-hidden="true">
+  </div>
+
+  <!-- Main Content -->
+  <main class="layout__content">
+    <router-outlet />
+  </main>
+</div>

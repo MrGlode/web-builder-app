@@ -1,0 +1,140 @@
+// src/app/shared/components/notification/notification.component.scss
+
+@import '../../../../styles/abstracts/variables';
+@import '../../../../styles/abstracts/mixins';
+
+.notifications {
+  position: fixed;
+  top: $spacing-6;
+  right: $spacing-6;
+  z-index: $z-index-tooltip;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  max-width: 420px;
+  width: 100%;
+
+  @media (max-width: $breakpoint-sm) {
+    top: $spacing-4;
+    right: $spacing-4;
+    left: $spacing-4;
+    max-width: none;
+  }
+}
+
+.notification {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  background-color: $white;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+  border-left: 4px solid;
+  animation: slideIn 0.3s ease-out;
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: $radius-full;
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-1;
+    color: $gray-900;
+  }
+
+  &__message {
+    font-size: $font-size-sm;
+    color: $gray-600;
+    line-height: $line-height-relaxed;
+    margin: 0;
+  }
+
+  &__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: $spacing-2;
+    background: none;
+    border: none;
+    color: $gray-500;
+    cursor: pointer;
+    border-radius: $radius-sm;
+    transition: all $transition-base;
+
+    &:hover {
+      background-color: $gray-100;
+      color: $gray-700;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $primary;
+      outline-offset: 2px;
+    }
+  }
+
+  // Success variant
+  &--success {
+    border-left-color: $success;
+
+    .notification__icon {
+      background-color: $success-light;
+      color: $success-dark;
+    }
+  }
+
+  // Error variant
+  &--error {
+    border-left-color: $danger;
+
+    .notification__icon {
+      background-color: $danger-light;
+      color: $danger-dark;
+    }
+  }
+
+  // Warning variant
+  &--warning {
+    border-left-color: $warning;
+
+    .notification__icon {
+      background-color: $warning-light;
+      color: $warning-dark;
+    }
+  }
+
+  // Info variant
+  &--info {
+    border-left-color: $info;
+
+    .notification__icon {
+      background-color: $info-light;
+      color: $info-dark;
+    }
+  }
+}
+
+// Animations
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

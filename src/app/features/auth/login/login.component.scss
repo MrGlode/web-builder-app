@@ -1,0 +1,323 @@
+// src/app/features/auth/login/login.component.scss
+
+@import '../../../../styles/abstracts/variables';
+@import '../../../../styles/abstracts/mixins';
+
+.login {
+  @include flex-center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, $primary-50 0%, $primary-100 100%);
+  padding: $spacing-4;
+
+  &__container {
+    width: 100%;
+    max-width: 440px;
+    background-color: $white;
+    border-radius: $radius-2xl;
+    box-shadow: $shadow-2xl;
+    padding: $spacing-8;
+
+    @include respond-to(md) {
+      padding: $spacing-10;
+    }
+  }
+
+  &__header {
+    text-align: center;
+    margin-bottom: $spacing-8;
+  }
+
+  &__logo {
+    @include flex-center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto $spacing-4;
+    background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
+    color: $white;
+    border-radius: $radius-2xl;
+    box-shadow: $shadow-lg;
+  }
+
+  h1 {
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: $gray-900;
+    margin-bottom: $spacing-2;
+  }
+
+  &__subtitle {
+    font-size: $font-size-base;
+    color: $gray-600;
+  }
+
+  &__error {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    padding: $spacing-4;
+    background-color: $danger-light;
+    color: $danger-dark;
+    border: 1px solid $danger;
+    border-radius: $radius-lg;
+    margin-bottom: $spacing-6;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__form {
+    margin-bottom: $spacing-8;
+  }
+
+  &__field {
+    margin-bottom: $spacing-5;
+  }
+
+  &__label {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $gray-700;
+    margin-bottom: $spacing-2;
+  }
+
+  &__required {
+    color: $danger;
+  }
+
+  &__input {
+    width: 100%;
+    padding: $spacing-3 $spacing-4;
+    font-size: $font-size-base;
+    font-family: $font-family-base;
+    color: $gray-900;
+    background-color: $white;
+    border: 1px solid $gray-300;
+    border-radius: $radius-lg;
+    transition: all $transition-base;
+
+    &::placeholder {
+      color: $gray-400;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 3px rgba($primary, 0.1);
+    }
+
+    &--error {
+      border-color: $danger;
+
+      &:focus {
+        border-color: $danger;
+        box-shadow: 0 0 0 3px rgba($danger, 0.1);
+      }
+    }
+  }
+
+  &__password-wrapper {
+    position: relative;
+  }
+
+  &__password-toggle {
+    position: absolute;
+    right: $spacing-3;
+    top: 50%;
+    transform: translateY(-50%);
+    @include flex-center;
+    padding: $spacing-2;
+    background: none;
+    border: none;
+    color: $gray-500;
+    cursor: pointer;
+    border-radius: $radius-md;
+    transition: all $transition-base;
+
+    &:hover {
+      color: $gray-700;
+      background-color: $gray-100;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $primary;
+      outline-offset: 2px;
+    }
+  }
+
+  &__field-error {
+    display: block;
+    margin-top: $spacing-2;
+    font-size: $font-size-xs;
+    color: $danger;
+  }
+
+  &__options {
+    @include flex-between;
+    margin-bottom: $spacing-6;
+    font-size: $font-size-sm;
+  }
+
+  &__checkbox {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    cursor: pointer;
+    color: $gray-700;
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      border-radius: $radius-sm;
+      border: 1px solid $gray-300;
+
+      &:focus-visible {
+        outline: 2px solid $primary;
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  &__forgot {
+    color: $primary;
+    font-weight: $font-weight-medium;
+    text-decoration: none;
+    transition: color $transition-base;
+
+    &:hover {
+      color: $primary-dark;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $primary;
+      outline-offset: 2px;
+      border-radius: $radius-sm;
+    }
+  }
+
+  &__submit {
+    @include button-primary;
+    width: 100%;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    padding: $spacing-4;
+    justify-content: center;
+
+    &:focus-visible {
+      box-shadow: 0 0 0 3px rgba($primary, 0.2);
+    }
+  }
+
+  &__loading {
+    @include flex-center;
+    gap: $spacing-2;
+  }
+
+  &__spinner {
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+
+    circle {
+      stroke-dasharray: 80;
+      stroke-dashoffset: 60;
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  &__test-accounts {
+    padding-top: $spacing-6;
+    border-top: 1px solid $gray-200;
+  }
+
+  &__test-title {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $gray-700;
+    margin-bottom: $spacing-3;
+  }
+
+  &__test-list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+  }
+
+  &__test-account {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    width: 100%;
+    padding: $spacing-3;
+    background-color: $gray-50;
+    border: 1px solid $gray-200;
+    border-radius: $radius-lg;
+    cursor: pointer;
+    transition: all $transition-base;
+    text-align: left;
+
+    &:hover {
+      background-color: $primary-50;
+      border-color: $primary-200;
+      transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $primary;
+      outline-offset: 2px;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &__test-icon {
+    @include flex-center;
+    width: 36px;
+    height: 36px;
+    background-color: $white;
+    color: $primary;
+    border-radius: $radius-md;
+    flex-shrink: 0;
+  }
+
+  &__test-info {
+    @include flex-column;
+    gap: $spacing-1;
+    flex: 1;
+  }
+
+  &__test-email {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $gray-900;
+  }
+
+  &__test-role {
+    font-size: $font-size-xs;
+    color: $gray-600;
+  }
+}
+
+// Responsive
+@media (max-width: $breakpoint-sm) {
+  .login {
+    &__container {
+      padding: $spacing-6;
+    }
+
+    h1 {
+      font-size: $font-size-2xl;
+    }
+  }
+}

@@ -1,0 +1,112 @@
+<aside 
+  class="sidebar" 
+  [class.sidebar--collapsed]="collapsed()"
+  role="navigation"
+  aria-label="Navigation principale">
+  
+  <nav class="sidebar__nav">
+    <ul class="sidebar__menu" role="list">
+      <li 
+        *ngFor="let item of menuItems" 
+        class="sidebar__item">
+        <a 
+          [routerLink]="item.route"
+          routerLinkActive="sidebar__link--active"
+          class="sidebar__link"
+          [attr.aria-label]="item.label"
+          [attr.aria-current]="item.route === '/dashboard' ? 'page' : null">
+          
+          <!-- Icônes SVG -->
+          <span class="sidebar__icon" aria-hidden="true">
+            <ng-container [ngSwitch]="item.icon">
+              <!-- Dashboard -->
+              <svg *ngSwitchCase="'dashboard'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+              </svg>
+              
+              <!-- Palette -->
+              <svg *ngSwitchCase="'palette'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 2a10 10 0 0 0 0 20c1.5 0 2.5-1 2.5-2.5 0-.6-.2-1.2-.5-1.6-.3-.5-.5-1-.5-1.4 0-.8.7-1.5 1.5-1.5h2c2.2 0 4-1.8 4-4a10 10 0 0 0-9-9.9z"/>
+                <circle cx="7.5" cy="10.5" r="1"/>
+                <circle cx="12" cy="7.5" r="1"/>
+                <circle cx="16.5" cy="10.5" r="1"/>
+              </svg>
+              
+              <!-- Builder -->
+              <svg *ngSwitchCase="'builder'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+              
+              <!-- Flow -->
+              <svg *ngSwitchCase="'flow'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v6m0 4v10"/>
+                <path d="M6 12h12"/>
+                <path d="M8 8h8"/>
+                <circle cx="12" cy="12" r="2"/>
+              </svg>
+              
+              <!-- Template -->
+              <svg *ngSwitchCase="'template'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="9" y1="3" x2="9" y2="21"/>
+              </svg>
+              
+              <!-- Deploy -->
+              <svg *ngSwitchCase="'deploy'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+              
+              <!-- Shield -->
+              <svg *ngSwitchCase="'shield'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </ng-container>
+          </span>
+          
+          <span class="sidebar__label">{{ item.label }}</span>
+          <span 
+            *ngIf="item.badge" 
+            class="sidebar__badge"
+            [attr.aria-label]="item.badge + ' éléments en attente'">
+            {{ item.badge }}
+          </span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="sidebar__footer">
+    <a 
+      href="#" 
+      class="sidebar__link"
+      aria-label="Paramètres de l'application">
+      <span class="sidebar__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6m0 6v6"/>
+          <path d="M3 12h6m6 0h6"/>
+        </svg>
+      </span>
+      <span class="sidebar__label">Paramètres</span>
+    </a>
+    
+    <a 
+      href="#" 
+      class="sidebar__link"
+      aria-label="Centre d'aide">
+      <span class="sidebar__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 16v-4"/>
+          <path d="M12 8h.01"/>
+        </svg>
+      </span>
+      <span class="sidebar__label">Aide</span>
+    </a>
+  </div>
+</aside>
