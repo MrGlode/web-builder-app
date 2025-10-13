@@ -1,0 +1,122 @@
+<!-- src/app/features/visual-builder/components/visual-builder/visual-builder.component.html -->
+
+<div 
+  class="visual-builder"
+  (keydown)="onKeyDown($event)"
+  tabindex="0"
+>
+  
+  <!-- ===== TOOLBAR ===== -->
+  <header class="builder-header">
+    <app-builder-toolbar
+      [viewMode]="viewMode()"
+      [zoomLevel]="zoomLevel()"
+      [canUndo]="canUndo()"
+      [canRedo]="canRedo()"
+      (viewModeChange)="onViewModeChange($event)"
+      (zoomChange)="onZoomChange($event)"
+      (undo)="onUndo()"
+      (redo)="onRedo()"
+      (save)="onSave()"
+      (preview)="onPreview()"
+      (export)="onExport()"
+    ></app-builder-toolbar>
+  </header>
+  
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="builder-main">
+    
+    <!-- ===== LEFT SIDEBAR: Component Palette ===== -->
+    <aside class="builder-sidebar left">
+      <app-component-palette
+        (componentAdded)="onComponentAdded($event)"
+        (componentDragged)="onComponentDragged($event)"
+      ></app-component-palette>
+    </aside>
+    
+    <!-- ===== CENTER: Canvas ===== -->
+    <main class="builder-canvas-container">
+      <app-builder-canvas
+        [components]="components()"
+        [selectedComponentId]="selectedComponent()?.id || null"
+        [viewMode]="viewMode()"
+        [zoomLevel]="zoomLevel()"
+        (componentSelected)="onComponentSelected($event)"
+        (componentHovered)="onComponentHovered($event)"
+        (componentDropped)="onComponentDropped($event)"
+      ></app-builder-canvas>
+    </main>
+    
+    <!-- ===== RIGHT SIDEBAR: Tabs ===== -->
+    <aside class="builder-sidebar right">
+      
+      <!-- Tabs Header -->
+      <div class="sidebar-tabs">
+        <button 
+          class="tab-button"
+          [class.active]="activeRightPanel() === 'layers'"
+          (click)="switchRightPanel('layers')"
+          title="Hiérarchie des composants"
+        >
+          📋 Layers
+        </button>
+        <button 
+          class="tab-button"
+          [class.active]="activeRightPanel() === 'properties'"
+          (click)="switchRightPanel('properties')"
+          title="Propriétés du composant"
+        >
+          ⚙️ Properties
+        </button>
+      </div>
+      
+      <!-- Tabs Content -->
+      <div class="sidebar-content">
+        
+        <!-- Layers Panel -->
+        @if (activeRightPanel() === 'layers') {
+          <app-layers-panel
+            [components]="components()"
+            [selectedComponentId]="selectedComponent()?.id || null"
+            (layerSelected)="onLayerSelected($event)"
+            (layersReordered)="onLayersReordered($event)"
+            (componentDeleted)="onComponentDeleted($event)"
+            (visibilityToggled)="onVisibilityToggled($event)"
+            (lockToggled)="onLockToggled($event)"
+          ></app-layers-panel>
+        }
+        
+        <!-- Properties Panel -->
+        @if (activeRightPanel() === 'properties') {
+          <app-properties-panel
+            [selectedComponent]="selectedComponent()"
+            [visible]="true"
+            (propertyChanged)="onPropertyChanged($event)"
+            (closed)="onPropertiesPanelClosed()"
+          ></app-properties-panel>
+        }
+        
+      </div>
+      
+    </aside>
+    
+  </div>
+  
+  <!-- ===== STATUS BAR (Optional) ===== -->
+  <footer class="builder-footer">
+    <div class="status-info">
+      <span class="status-item">
+        📦 {{ componentCount() }} composant{{ componentCount() > 1 ? 's' : '' }}
+      </span>
+      @if (selectedComponent()) {
+        <span class="status-item">
+          📌 {{ selectedComponent()?.displayName }}
+        </span>
+      }
+      <span class="status-item">
+        🔍 {{ zoomLevel() }}%
+      </span>
+    </div>
+  </footer>
+  
+</div>

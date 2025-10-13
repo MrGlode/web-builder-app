@@ -1,0 +1,176 @@
+<!-- src/app/features/visual-builder/components/layers-panel/layers-panel.component.html -->
+
+<div class="layers-panel">
+  
+  <!-- Header -->
+  <div class="panel-header">
+    <div class="header-title">
+      <span class="icon">📋</span>
+      <h3>Layers</h3>
+      <span class="badge">{{ components().length }}</span>
+    </div>
+    
+    <div class="header-actions">
+      <button 
+        class="btn-icon" 
+        (click)="collapseAll()"
+        title="Tout réduire">
+        ▼
+      </button>
+      
+      <button 
+        class="btn-icon" 
+        (click)="expandAll()"
+        title="Tout développer">
+        ▲
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-bar">
+    <input 
+      type="text"
+      class="search-input"
+      placeholder="Rechercher un composant..."
+      [value]="searchQuery"
+      (input)="onSearch($any($event.target).value)">
+    
+    <button 
+      class="btn-clear-search"
+      *ngIf="searchQuery"
+      (click)="clearSearch()"
+      title="Effacer">
+      ×
+    </button>
+  </div>
+
+  <!-- View Options -->
+  <div class="view-options">
+    <label class="option-checkbox">
+      <input 
+        type="checkbox"
+        [checked]="viewOptions().showHidden"
+        (change)="toggleShowHidden()">
+      <span>Afficher cachés</span>
+    </label>
+    
+    <label class="option-checkbox">
+      <input 
+        type="checkbox"
+        [checked]="viewOptions().showLocked"
+        (change)="toggleShowLocked()">
+      <span>Afficher verrouillés</span>
+    </label>
+  </div>
+
+  <!-- Layers Tree -->
+  <div class="layers-tree">
+    
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredComponents().length === 0 && !searchQuery">
+      <span class="empty-icon">📦</span>
+      <p>Aucun composant</p>
+      <small>Glissez des composants depuis la palette</small>
+    </div>
+
+    <!-- No Results -->
+    <div class="empty-state" *ngIf="filteredComponents().length === 0 && searchQuery">
+      <span class="empty-icon">🔍</span>
+      <p>Aucun résultat</p>
+      <small>Essayez un autre terme de recherche</small>
+    </div>
+
+    <!-- Tree Items -->
+    <ng-container *ngIf="filteredComponents().length > 0">
+      <div 
+        *ngFor="let component of filteredComponents()"
+        class="tree-item-wrapper">
+        
+        <!-- Render component recursively -->
+        <ng-container *ngTemplateOutlet="layerItem; context: { $implicit: component, level: 0 }">
+        </ng-container>
+        
+      </div>
+    </ng-container>
+  </div>
+
+</div>
+
+<!-- Template récursif pour les items -->
+<ng-template #layerItem let-component let-level="level">
+  <div 
+    class="layer-item"
+    [class.selected]="isSelected(component)"
+    [class.hidden]="!getLayerState(component.id).isVisible"
+    [class.locked]="getLayerState(component.id).isLocked"
+    [style.padding-left.px]="level * 16"
+    (click)="selectComponent(component, $event)">
+    
+    <!-- Expand/Collapse Button -->
+    <button 
+      *ngIf="component.children && component.children.length > 0"
+      class="btn-expand"
+      (click)="toggleExpand(component, $event)">
+      <span [class.rotated]="getLayerState(component.id).isExpanded">▶</span>
+    </button>
+    
+    <!-- Spacer if no children -->
+    <span 
+      *ngIf="!component.children || component.children.length === 0"
+      class="expand-spacer">
+    </span>
+    
+    <!-- Component Icon & Name -->
+    <div class="item-info">
+      <span class="item-icon">{{ getComponentIcon(component) }}</span>
+      <span class="item-name">{{ component.displayName }}</span>
+      <span class="item-type">{{ component.type }}</span>
+    </div>
+    
+    <!-- Actions -->
+    <div class="item-actions">
+      <button 
+        class="btn-action"
+        [class.active]="getLayerState(component.id).isVisible"
+        (click)="toggleVisibility(component, $event)"
+        title="Visibilité">
+        {{ getLayerState(component.id).isVisible ? '👁️' : '👁️‍🗨️' }}
+      </button>
+      
+      <button 
+        class="btn-action"
+        [class.active]="getLayerState(component.id).isLocked"
+        (click)="toggleLock(component, $event)"
+        title="Verrouiller">
+        {{ getLayerState(component.id).isLocked ? '🔒' : '🔓' }}
+      </button>
+      
+      <button 
+        class="btn-action"
+        (click)="duplicateComponent(component, $event)"
+        title="Dupliquer">
+        📋
+      </button>
+      
+      <button 
+        class="btn-action btn-delete"
+        (click)="deleteComponent(component, $event)"
+        title="Supprimer">
+        🗑️
+      </button>
+    </div>
+  </div>
+  
+  <!-- Children (if expanded) -->
+  <div 
+    *ngIf="component.children && component.children.length > 0 && getLayerState(component.id).isExpanded"
+    class="layer-children">
+    
+    <ng-container *ngFor="let child of component.children">
+      <ng-container *ngTemplateOutlet="layerItem; context: { $implicit: child, level: level + 1 }">
+      </ng-container>
+    </ng-container>
+    
+  </div>
+</ng-template>

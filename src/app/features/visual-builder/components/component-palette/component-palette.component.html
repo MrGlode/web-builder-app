@@ -1,0 +1,165 @@
+<!-- src/app/features/visual-builder/components/component-palette/component-palette.component.html -->
+
+<div class="component-palette">
+  
+  <!-- ============================================ -->
+  <!-- BARRE DE RECHERCHE -->
+  <!-- ============================================ -->
+  <div class="palette-search">
+    <div class="search-input-wrapper">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Rechercher un composant..."
+        [value]="searchTerm()"
+        (input)="onSearchChange($any($event.target).value)"
+      />
+      @if (searchTerm()) {
+        <button
+          class="search-clear"
+          (click)="clearSearch()"
+          title="Effacer">
+          ✕
+        </button>
+      }
+    </div>
+    
+    @if (searchTerm()) {
+      <div class="search-results">
+        <span class="results-count">{{ totalFilteredCount() }} résultat(s)</span>
+      </div>
+    }
+  </div>
+  
+  <!-- ============================================ -->
+  <!-- FILTRES PAR CATÉGORIE -->
+  <!-- ============================================ -->
+  <div class="palette-filters">
+    <button
+      class="filter-btn"
+      [class.active]="selectedCategory() === null"
+      (click)="selectCategory(null)">
+      Tous
+    </button>
+    
+    @for (category of categories; track category.key) {
+      <button
+        class="filter-btn"
+        [class.active]="selectedCategory() === category.key"
+        (click)="selectCategory(category.key)"
+        [title]="category.label">
+        <span class="filter-icon">{{ category.icon }}</span>
+        <span class="filter-label">{{ category.label }}</span>
+        <span class="filter-count">({{ getCategoryCount(category.key) }})</span>
+      </button>
+    }
+  </div>
+  
+  <!-- ============================================ -->
+  <!-- LISTE DES COMPOSANTS PAR CATÉGORIE -->
+  <!-- ============================================ -->
+  <div class="palette-content">
+    
+    @if (selectedCategory()) {
+      <!-- Mode filtré : une seule catégorie -->
+      <div class="palette-category">
+        <div class="components-grid">
+          @for (component of filteredComponents(); track component.type) {
+            <div
+              class="component-item"
+              draggable="true"
+              (click)="onComponentClick(component)"
+              (dragstart)="onDragStart($event, component)"
+              (dragend)="onDragEnd($event)"
+              [title]="component.description">
+              
+              <div class="component-icon">{{ component.icon }}</div>
+              <div class="component-name">{{ component.displayName }}</div>
+              
+            </div>
+          }
+        </div>
+        
+        @if (filteredComponents().length === 0) {
+          <div class="empty-state">
+            <p>Aucun composant trouvé</p>
+          </div>
+        }
+      </div>
+      
+    } @else {
+      <!-- Mode normal : toutes les catégories -->
+      @for (category of categories; track category.key) {
+        @if (componentsByCategory()[category.key]!.length > 0) {
+          <div class="palette-category">
+            
+            <!-- En-tête de catégorie -->
+            <div
+              class="category-header"
+              (click)="toggleCategory(category.key)">
+              
+              <div class="category-info">
+                <span class="category-icon">{{ category.icon }}</span>
+                <h3 class="category-title">{{ category.label }}</h3>
+                <span class="category-count">{{ getCategoryCount(category.key) }}</span>
+              </div>
+              
+              <button class="category-toggle">
+                <span [class.expanded]="isCategoryExpanded(category.key)">▼</span>
+              </button>
+              
+            </div>
+            
+            <!-- Composants de la catégorie -->
+            @if (isCategoryExpanded(category.key)) {
+              <div class="components-grid">
+                @for (component of componentsByCategory()[category.key]; track component.type) {
+                  <div
+                    class="component-item"
+                    draggable="true"
+                    (click)="onComponentClick(component)"
+                    (dragstart)="onDragStart($event, component)"
+                    (dragend)="onDragEnd($event)"
+                    [title]="component.description">
+                    
+                    <div class="component-icon">{{ component.icon }}</div>
+                    <div class="component-name">{{ component.displayName }}</div>
+                    
+                  </div>
+                }
+              </div>
+            }
+            
+          </div>
+        }
+      }
+    }
+    
+    <!-- État vide global -->
+    @if (totalFilteredCount() === 0 && searchTerm()) {
+      <div class="palette-empty">
+        <div class="empty-icon">🔍</div>
+        <h3 class="empty-title">Aucun résultat</h3>
+        <p class="empty-text">
+          Aucun composant ne correspond à "{{ searchTerm() }}"
+        </p>
+        <button class="empty-action" (click)="clearSearch()">
+          Effacer la recherche
+        </button>
+      </div>
+    }
+    
+  </div>
+  
+  <!-- ============================================ -->
+  <!-- AIDE -->
+  <!-- ============================================ -->
+  <div class="palette-help">
+    <div class="help-icon">💡</div>
+    <p class="help-text">
+      Cliquez ou glissez-déposez un composant sur le canvas pour l'ajouter
+    </p>
+  </div>
+  
+</div>

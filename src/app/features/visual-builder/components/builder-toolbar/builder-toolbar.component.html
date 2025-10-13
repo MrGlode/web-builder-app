@@ -1,0 +1,163 @@
+<!-- src/app/features/visual-builder/components/builder-toolbar/builder-toolbar.component.html -->
+
+<div class="builder-toolbar">
+  
+  <!-- Section Gauche : Actions principales -->
+  <div class="toolbar-section toolbar-left">
+    
+    <!-- Logo / Titre -->
+    <div class="toolbar-brand">
+      <span class="brand-icon">🎨</span>
+      <span class="brand-text">Visual Builder</span>
+    </div>
+    
+    <div class="toolbar-divider"></div>
+    
+    <!-- Bouton Save -->
+    <button 
+      class="toolbar-btn toolbar-btn-primary"
+      (click)="save()"
+      title="Sauvegarder (Ctrl+S)">
+      <span class="btn-icon">💾</span>
+      <span class="btn-text">Sauvegarder</span>
+    </button>
+    
+    <!-- Bouton Preview -->
+    <button 
+      class="toolbar-btn"
+      (click)="preview()"
+      title="Prévisualiser">
+      <span class="btn-icon">👁️</span>
+      <span class="btn-text">Aperçu</span>
+    </button>
+    
+    <div class="toolbar-divider"></div>
+    
+    <!-- Historique : Undo / Redo -->
+    <div class="toolbar-history">
+      <button 
+        class="toolbar-btn-icon"
+        [disabled]="!canUndo()"
+        (click)="undo()"
+        title="Annuler (Ctrl+Z)">
+        ↶
+      </button>
+      
+      <button 
+        class="toolbar-btn-icon"
+        [disabled]="!canRedo()"
+        (click)="redo()"
+        title="Refaire (Ctrl+Shift+Z)">
+        ↷
+      </button>
+    </div>
+    
+  </div>
+  
+  <!-- Section Centre : Modes de vue -->
+  <div class="toolbar-section toolbar-center">
+    
+    <div class="view-mode-selector">
+      
+      <!-- Desktop -->
+      <button 
+        class="view-mode-btn"
+        [class.active]="isViewModeActive('desktop')"
+        (click)="setViewMode('desktop')"
+        [title]="'Desktop - ' + getViewModeDimensions('desktop')">
+        <span class="view-icon">🖥️</span>
+        <span class="view-label">Desktop</span>
+      </button>
+      
+      <!-- Tablet -->
+      <button 
+        class="view-mode-btn"
+        [class.active]="isViewModeActive('tablet')"
+        (click)="setViewMode('tablet')"
+        [title]="'Tablet - ' + getViewModeDimensions('tablet')">
+        <span class="view-icon">📱</span>
+        <span class="view-label">Tablet</span>
+      </button>
+      
+      <!-- Mobile -->
+      <button 
+        class="view-mode-btn"
+        [class.active]="isViewModeActive('mobile')"
+        (click)="setViewMode('mobile')"
+        [title]="'Mobile - ' + getViewModeDimensions('mobile')">
+        <span class="view-icon">📱</span>
+        <span class="view-label">Mobile</span>
+      </button>
+      
+    </div>
+    
+  </div>
+  
+  <!-- Section Droite : Zoom & Options -->
+  <div class="toolbar-section toolbar-right">
+    
+    <!-- Contrôle de Zoom -->
+    <div class="zoom-control">
+      
+      <button 
+        class="toolbar-btn-icon"
+        (click)="zoomOut()"
+        [disabled]="currentZoomLevel <= 25"
+        title="Zoom arrière">
+        −
+      </button>
+      
+      <div class="zoom-display" (click)="toggleZoomDropdown()">
+        <span class="zoom-value">{{ currentZoomLevel }}%</span>
+        <span class="zoom-arrow">▼</span>
+        
+        <!-- Dropdown Zoom -->
+        <div class="zoom-dropdown" *ngIf="showZoomDropdown">
+          <button 
+            *ngFor="let level of zoomLevels"
+            class="zoom-option"
+            [class.active]="currentZoomLevel === level"
+            (click)="setZoomLevel(level)">
+            {{ level }}%
+          </button>
+          <div class="zoom-divider"></div>
+          <button 
+            class="zoom-option zoom-fit"
+            (click)="resetZoom()">
+            Réinitialiser (100%)
+          </button>
+        </div>
+      </div>
+      
+      <button 
+        class="toolbar-btn-icon"
+        (click)="zoomIn()"
+        [disabled]="currentZoomLevel >= 200"
+        title="Zoom avant">
+        +
+      </button>
+      
+    </div>
+    
+    <div class="toolbar-divider"></div>
+    
+    <!-- Export -->
+    <button 
+      class="toolbar-btn"
+      (click)="exportPage()"
+      title="Exporter">
+      <span class="btn-icon">📥</span>
+      <span class="btn-text">Export</span>
+    </button>
+    
+    <!-- Settings -->
+    <button 
+      class="toolbar-btn-icon"
+      (click)="openSettings()"
+      title="Paramètres">
+      ⚙️
+    </button>
+    
+  </div>
+  
+</div>

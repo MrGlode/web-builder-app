@@ -1,0 +1,142 @@
+<!-- src/app/features/visual-builder/components/builder-canvas/builder-canvas.component.html -->
+
+<div 
+  class="builder-canvas"
+  [class.dragging]="canvasDragging()">
+  
+  <div 
+    class="canvas-content"
+    (click)="onCanvasClick($event)"
+    (dragover)="onCanvasDragOver($event)"
+    (dragleave)="onCanvasDragLeave($event)"
+    (drop)="onCanvasDrop($event)">
+    
+    <!-- État vide -->
+    <div class="canvas-empty" *ngIf="components().length === 0">
+      <div class="empty-content">
+        <span class="empty-icon">🎨</span>
+        <h3>Canvas vide</h3>
+        <p>Glissez un composant depuis la palette pour commencer</p>
+        <div class="empty-hint">
+          <span class="hint-icon">💡</span>
+          <span>Ou cliquez sur un composant dans la palette</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Liste des composants -->
+    <div class="components-list" *ngIf="components().length > 0">
+      <ng-container *ngFor="let component of components()">
+        <ng-container *ngTemplateOutlet="componentItem; context: { $implicit: component }">
+        </ng-container>
+      </ng-container>
+    </div>
+    
+    <!-- Indicateur de drop zone globale -->
+    <div class="drop-indicator" *ngIf="canvasDragging()">
+      <span class="indicator-icon">📍</span>
+      <span class="indicator-text">Déposez ici pour ajouter au canvas</span>
+    </div>
+    
+  </div>
+  
+</div>
+
+<!-- Template récursif pour afficher les composants -->
+<ng-template #componentItem let-component>
+  <div 
+    class="canvas-component"
+    [class.selected]="isSelected(component)"
+    [class.hovered]="isHovered(component)"
+    [class.container]="canHaveChildren(component)"
+    [class.hidden]="component.isHidden"
+    [class.locked]="component.isLocked"
+    [class.drop-zone-active]="isDropZoneActive(component.id)"
+    [attr.data-component-id]="component.id"
+    [attr.data-component-type]="component.type"
+    (click)="selectComponent(component, $event)"
+    (mouseenter)="onComponentMouseEnter(component, $event)"
+    (mouseleave)="onComponentMouseLeave(component, $event)"
+    (dragover)="canHaveChildren(component) ? onContainerDragOver($event, component) : null"
+    (drop)="canHaveChildren(component) ? onContainerDrop($event, component) : null">
+    
+    <!-- Header du composant -->
+    <div class="component-header">
+      <span class="component-icon">{{ getComponentIcon(component) }}</span>
+      <span class="component-name">{{ component.displayName }}</span>
+      <span class="component-type">{{ component.type }}</span>
+      
+      <!-- Badges d'état -->
+      <div class="component-badges">
+        <span class="badge badge-hidden" *ngIf="component.isHidden">👁️‍🗨️</span>
+        <span class="badge badge-locked" *ngIf="component.isLocked">🔒</span>
+        <span class="badge badge-container" *ngIf="canHaveChildren(component)">📦</span>
+      </div>
+    </div>
+    
+    <!-- Contenu du composant -->
+    <div class="component-content">
+      
+      <!-- Si c'est un composant de texte -->
+      <div class="content-preview" *ngIf="component.type === 'heading' || component.type === 'paragraph'">
+        <p class="preview-text">
+          {{ component.properties.content?.text || 'Texte vide' }}
+        </p>
+      </div>
+      
+      <!-- Si c'est un bouton -->
+      <div class="content-preview" *ngIf="component.type === 'button'">
+        <button class="preview-button" [disabled]="true">
+          {{ component.properties.content?.text || 'Bouton' }}
+        </button>
+      </div>
+      
+      <!-- Si c'est une image -->
+      <div class="content-preview" *ngIf="component.type === 'image'">
+        <div class="preview-image">
+          <span class="image-placeholder">🖼️</span>
+          <small>{{ component.properties.content?.alt || 'Image' }}</small>
+        </div>
+      </div>
+      
+      <!-- Si c'est un input -->
+      <div class="content-preview" *ngIf="component.type === 'input' || component.type === 'textarea'">
+        <input 
+          class="preview-input" 
+          type="text" 
+          [placeholder]="component.properties.content?.placeholder || 'Placeholder'"
+          [disabled]="true">
+      </div>
+      
+      <!-- Zone de drop pour les containers -->
+      <div 
+        class="container-drop-zone" 
+        *ngIf="canHaveChildren(component)"
+        [class.active]="isDropZoneActive(component.id)">
+        
+        <!-- Enfants du container -->
+        <div class="container-children" *ngIf="component.children && component.children.length > 0">
+          <ng-container *ngFor="let child of component.children">
+            <ng-container *ngTemplateOutlet="componentItem; context: { $implicit: child }">
+            </ng-container>
+          </ng-container>
+        </div>
+        
+        <!-- Message si container vide -->
+        <div class="container-empty" *ngIf="!component.children || component.children.length === 0">
+          <span class="empty-icon">📦</span>
+          <span class="empty-text">Déposez des composants ici</span>
+        </div>
+        
+      </div>
+      
+    </div>
+    
+    <!-- Outline de sélection -->
+    <div class="selection-outline" *ngIf="isSelected(component)"></div>
+    
+    <!-- Outline de hover -->
+    <div class="hover-outline" *ngIf="isHovered(component) && !isSelected(component)"></div>
+    
+  </div>
+</ng-template>

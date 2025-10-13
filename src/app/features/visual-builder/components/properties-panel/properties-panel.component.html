@@ -1,0 +1,167 @@
+<!-- src/app/features/visual-builder/components/properties-panel/properties-panel.component.html -->
+
+<div class="properties-panel" [class.visible]="visible()">
+  
+  <!-- Header -->
+  <div class="panel-header">
+    <h3 class="panel-title">{{ panelTitle() }}</h3>
+    <button 
+      class="close-btn"
+      (click)="onClose()"
+      title="Fermer"
+    >
+      ✕
+    </button>
+  </div>
+  
+  <!-- Content -->
+  <div class="panel-content">
+    
+    @if (!selectedComponent()) {
+      <!-- État vide -->
+      <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <p class="empty-text">
+          Sélectionnez un composant pour voir ses propriétés
+        </p>
+      </div>
+    }
+    
+    @else if (!hasContent()) {
+      <!-- Aucune propriété -->
+      <div class="empty-state">
+        <div class="empty-icon">⚙️</div>
+        <p class="empty-text">
+          Ce composant n'a pas de propriétés éditables
+        </p>
+      </div>
+    }
+    
+    @else {
+      <!-- Sections de propriétés -->
+      @for (section of propertySections(); track section.title) {
+        <div class="property-section">
+          
+          <!-- Section header -->
+          <div class="section-header">
+            <span class="section-icon">{{ section.icon }}</span>
+            <h4 class="section-title">{{ section.title }}</h4>
+          </div>
+          
+          <!-- Section content -->
+          <div class="section-content">
+            
+            @for (prop of section.properties; track prop.key) {
+              <div class="property-field">
+                
+                <label [for]="'prop-' + prop.key" class="property-label">
+                  {{ prop.label }}
+                </label>
+                
+                <!-- Text input -->
+                @if (prop.type === 'text') {
+                  <input
+                    [id]="'prop-' + prop.key"
+                    type="text"
+                    class="property-input"
+                    [value]="prop.value"
+                    [placeholder]="prop.placeholder || ''"
+                    (input)="onPropertyChange(section.key, prop.key, $any($event.target).value)"
+                  />
+                }
+                
+                <!-- Number input -->
+                @else if (prop.type === 'number') {
+                  <input
+                    [id]="'prop-' + prop.key"
+                    type="number"
+                    class="property-input"
+                    [value]="prop.value"
+                    [placeholder]="prop.placeholder || ''"
+                    (input)="onPropertyChange(section.key, prop.key, $any($event.target).value)"
+                  />
+                }
+                
+                <!-- URL input -->
+                @else if (prop.type === 'url') {
+                  <input
+                    [id]="'prop-' + prop.key"
+                    type="url"
+                    class="property-input"
+                    [value]="prop.value"
+                    [placeholder]="prop.placeholder || ''"
+                    (input)="onPropertyChange(section.key, prop.key, $any($event.target).value)"
+                  />
+                }
+                
+                <!-- Color input -->
+                @else if (prop.type === 'color') {
+                  <div class="color-input-wrapper">
+                    <input
+                      [id]="'prop-' + prop.key"
+                      type="color"
+                      class="property-color"
+                      [value]="prop.value"
+                      (input)="onPropertyChange(section.key, prop.key, $any($event.target).value)"
+                    />
+                    <input
+                      type="text"
+                      class="property-input color-text"
+                      [value]="prop.value"
+                      (input)="onPropertyChange(section.key, prop.key, $any($event.target).value)"
+                    />
+                  </div>
+                }
+                
+                <!-- Select -->
+                @else if (prop.type === 'select') {
+                  <select
+                    [id]="'prop-' + prop.key"
+                    class="property-select"
+                    [value]="prop.value"
+                    (change)="onPropertyChange(section.key, prop.key, $any($event.target).value)"
+                  >
+                    @for (option of prop.options; track option) {
+                      <option [value]="option">{{ option }}</option>
+                    }
+                  </select>
+                }
+                
+                <!-- Textarea -->
+                @else if (prop.type === 'textarea') {
+                  <textarea
+                    [id]="'prop-' + prop.key"
+                    class="property-textarea"
+                    [value]="prop.value"
+                    [placeholder]="prop.placeholder || ''"
+                    (input)="onPropertyChange(section.key, prop.key, $any($event.target).value)"
+                    rows="3"
+                  ></textarea>
+                }
+                
+                <!-- Checkbox -->
+                @else if (prop.type === 'checkbox') {
+                  <div class="checkbox-wrapper">
+                    <input
+                      [id]="'prop-' + prop.key"
+                      type="checkbox"
+                      class="property-checkbox"
+                      [checked]="prop.value"
+                      (change)="onPropertyChange(section.key, prop.key, $any($event.target).checked)"
+                    />
+                    <span class="checkbox-label">Activé</span>
+                  </div>
+                }
+                
+              </div>
+            }
+            
+          </div>
+          
+        </div>
+      }
+    }
+    
+  </div>
+  
+</div>

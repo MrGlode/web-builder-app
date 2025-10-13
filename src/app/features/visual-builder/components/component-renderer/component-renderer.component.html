@@ -1,0 +1,372 @@
+<!-- src/app/features/visual-builder/components/component-renderer/component-renderer.component.html -->
+
+<div 
+  class="component-renderer"
+  [class.selected]="isSelected()"
+  [class.edit-mode]="isEditMode()"
+  [ngClass]="component().type | componentClass"
+  (click)="onClick($event)"
+  (dblclick)="onDoubleClick($event)">
+  
+  <!-- Rendu selon le type de composant -->
+  @switch (component().type) {
+    
+    <!-- ============================================ -->
+    <!-- LAYOUT COMPONENTS -->
+    <!-- ============================================ -->
+    
+    @case ('container') {
+      <div class="rendered-container" [ngStyle]="component().properties.styles | toStyles">
+        @if (isContainer()) {
+          @for (child of component().children; track child.id) {
+            <app-component-renderer
+              [component]="child"
+              [isEditMode]="isEditMode()"
+              (componentClick)="componentClick.emit($event)"
+              (componentDoubleClick)="componentDoubleClick.emit($event)">
+            </app-component-renderer>
+          }
+        } @else {
+          <div class="empty-container">Container vide</div>
+        }
+      </div>
+    }
+    
+    @case ('section') {
+      <section class="rendered-section" [ngStyle]="component().properties.styles | toStyles">
+        @if (isContainer()) {
+          @for (child of component().children; track child.id) {
+            <app-component-renderer
+              [component]="child"
+              [isEditMode]="isEditMode()"
+              (componentClick)="componentClick.emit($event)"
+              (componentDoubleClick)="componentDoubleClick.emit($event)">
+            </app-component-renderer>
+          }
+        }
+      </section>
+    }
+    
+    @case ('grid') {
+      <div class="rendered-grid" [ngStyle]="component().properties.styles | toStyles">
+        @if (isContainer()) {
+          @for (child of component().children; track child.id) {
+            <app-component-renderer
+              [component]="child"
+              [isEditMode]="isEditMode()"
+              (componentClick)="componentClick.emit($event)"
+              (componentDoubleClick)="componentDoubleClick.emit($event)">
+            </app-component-renderer>
+          }
+        }
+      </div>
+    }
+    
+    @case ('flexbox') {
+      <div class="rendered-flexbox" [ngStyle]="component().properties.styles | toStyles">
+        @if (isContainer()) {
+          @for (child of component().children; track child.id) {
+            <app-component-renderer
+              [component]="child"
+              [isEditMode]="isEditMode()"
+              (componentClick)="componentClick.emit($event)"
+              (componentDoubleClick)="componentDoubleClick.emit($event)">
+            </app-component-renderer>
+          }
+        }
+      </div>
+    }
+    
+    @case ('divider') {
+      <hr [ngStyle]="component().properties.styles | toStyles">
+    }
+    
+    <!-- ============================================ -->
+    <!-- FORM COMPONENTS -->
+    <!-- ============================================ -->
+    
+    @case ('input') {
+      <input 
+        [type]="getAttribute('type') || 'text'"
+        [placeholder]="getPlaceholder()"
+        [value]="getValue()"
+        [disabled]="hasAttribute('disabled')"
+        [ngStyle]="component().properties.styles | toStyles"
+        class="rendered-input">
+    }
+    
+    @case ('textarea') {
+      <textarea
+        [placeholder]="getPlaceholder()"
+        [rows]="getAttribute('rows') || 5"
+        [disabled]="hasAttribute('disabled')"
+        [ngStyle]="component().properties.styles | toStyles"
+        class="rendered-textarea">{{ getValue() }}</textarea>
+    }
+    
+    @case ('select') {
+      <select
+        [disabled]="hasAttribute('disabled')"
+        [ngStyle]="component().properties.styles | toStyles"
+        class="rendered-select">
+        <option value="">Sélectionner...</option>
+        <option value="1">Option 1</option>
+        <option value="2">Option 2</option>
+        <option value="3">Option 3</option>
+      </select>
+    }
+    
+    @case ('checkbox') {
+      <label class="rendered-checkbox" [ngStyle]="component().properties.styles | toStyles">
+        <input type="checkbox" [checked]="getValue() === 'true' || getValue() === 'true'">
+        <span>{{ getLabel() }}</span>
+      </label>
+    }
+    
+    @case ('radio') {
+      <label class="rendered-radio" [ngStyle]="component().properties.styles | toStyles">
+        <input type="radio" [name]="getAttribute('name') || 'radio'">
+        <span>{{ getLabel() }}</span>
+      </label>
+    }
+    
+    @case ('button') {
+      <button
+        [type]="getAttribute('type') || 'button'"
+        [disabled]="hasAttribute('disabled')"
+        [ngStyle]="component().properties.styles | toStyles"
+        class="rendered-button">
+        {{ getTextContent() || 'Button' }}
+      </button>
+    }
+    
+    <!-- ============================================ -->
+    <!-- CONTENT COMPONENTS -->
+    <!-- ============================================ -->
+    
+    @case ('heading') {
+      @switch (getHeadingLevel()) {
+        @case (1) {
+          <h1 [ngStyle]="component().properties.styles | toStyles">{{ getTextContent() }}</h1>
+        }
+        @case (2) {
+          <h2 [ngStyle]="component().properties.styles | toStyles">{{ getTextContent() }}</h2>
+        }
+        @case (3) {
+          <h3 [ngStyle]="component().properties.styles | toStyles">{{ getTextContent() }}</h3>
+        }
+        @case (4) {
+          <h4 [ngStyle]="component().properties.styles | toStyles">{{ getTextContent() }}</h4>
+        }
+        @case (5) {
+          <h5 [ngStyle]="component().properties.styles | toStyles">{{ getTextContent() }}</h5>
+        }
+        @case (6) {
+          <h6 [ngStyle]="component().properties.styles | toStyles">{{ getTextContent() }}</h6>
+        }
+      }
+    }
+    
+    @case ('paragraph') {
+      <p [ngStyle]="component().properties.styles | toStyles">{{ getTextContent() }}</p>
+    }
+    
+    @case ('list') {
+      @if (getAttribute('type') === 'ordered') {
+        <ol [ngStyle]="component().properties.styles | toStyles">
+          <li>Item 1</li>
+          <li>Item 2</li>
+          <li>Item 3</li>
+        </ol>
+      } @else {
+        <ul [ngStyle]="component().properties.styles | toStyles">
+          <li>Item 1</li>
+          <li>Item 2</li>
+          <li>Item 3</li>
+        </ul>
+      }
+    }
+    
+    @case ('table') {
+      <table [ngStyle]="component().properties.styles | toStyles">
+        <thead>
+          <tr>
+            <th>Column 1</th>
+            <th>Column 2</th>
+            <th>Column 3</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Data 1</td>
+            <td>Data 2</td>
+            <td>Data 3</td>
+          </tr>
+          <tr>
+            <td>Data 4</td>
+            <td>Data 5</td>
+            <td>Data 6</td>
+          </tr>
+        </tbody>
+      </table>
+    }
+    
+    @case ('code') {
+      <pre [ngStyle]="component().properties.styles | toStyles"><code>{{ getTextContent() || '// Code here' }}</code></pre>
+    }
+    
+    <!-- ============================================ -->
+    <!-- MEDIA COMPONENTS -->
+    <!-- ============================================ -->
+    
+    @case ('image') {
+      <img
+        [src]="getImageSrc()"
+        [alt]="getImageAlt()"
+        [ngStyle]="component().properties.styles | toStyles"
+        loading="lazy"
+        class="rendered-image">
+    }
+    
+    @case ('video') {
+      <video
+        controls
+        [autoplay]="hasAttribute('autoplay')"
+        [ngStyle]="component().properties.styles | toStyles"
+        class="rendered-video">
+        <source [src]="getImageSrc()" type="video/mp4">
+        Votre navigateur ne supporte pas la vidéo.
+      </video>
+    }
+    
+    @case ('icon') {
+      <span [ngStyle]="component().properties.styles | toStyles" class="rendered-icon">
+        {{ getTextContent() || '⭐' }}
+      </span>
+    }
+    
+    @case ('gallery') {
+      <div class="rendered-gallery" [ngStyle]="component().properties.styles | toStyles">
+        @if (isContainer()) {
+          @for (child of component().children; track child.id) {
+            <app-component-renderer
+              [component]="child"
+              [isEditMode]="isEditMode()"
+              (componentClick)="componentClick.emit($event)"
+              (componentDoubleClick)="componentDoubleClick.emit($event)">
+            </app-component-renderer>
+          }
+        }
+      </div>
+    }
+    
+    <!-- ============================================ -->
+    <!-- CUSTOM COMPONENTS -->
+    <!-- ============================================ -->
+    
+    @case ('card') {
+      <article class="rendered-card" [ngStyle]="component().properties.styles | toStyles">
+        @if (isContainer()) {
+          @for (child of component().children; track child.id) {
+            <app-component-renderer
+              [component]="child"
+              [isEditMode]="isEditMode()"
+              (componentClick)="componentClick.emit($event)"
+              (componentDoubleClick)="componentDoubleClick.emit($event)">
+            </app-component-renderer>
+          }
+        }
+      </article>
+    }
+    
+    @case ('modal') {
+      <div class="rendered-modal" [ngStyle]="component().properties.styles | toStyles">
+        <div class="modal-content">
+          @if (isContainer()) {
+            @for (child of component().children; track child.id) {
+              <app-component-renderer
+                [component]="child"
+                [isEditMode]="isEditMode()"
+                (componentClick)="componentClick.emit($event)"
+                (componentDoubleClick)="componentDoubleClick.emit($event)">
+              </app-component-renderer>
+            }
+          }
+        </div>
+      </div>
+    }
+    
+    @case ('tabs') {
+      <div class="rendered-tabs" [ngStyle]="component().properties.styles | toStyles">
+        <div class="tabs-header">
+          <button class="tab-button active">Tab 1</button>
+          <button class="tab-button">Tab 2</button>
+          <button class="tab-button">Tab 3</button>
+        </div>
+        <div class="tabs-content">
+          @if (isContainer()) {
+            @for (child of component().children; track child.id) {
+              <app-component-renderer
+                [component]="child"
+                [isEditMode]="isEditMode()"
+                (componentClick)="componentClick.emit($event)"
+                (componentDoubleClick)="componentDoubleClick.emit($event)">
+              </app-component-renderer>
+            }
+          }
+        </div>
+      </div>
+    }
+    
+    @case ('accordion') {
+      <div class="rendered-accordion" [ngStyle]="component().properties.styles | toStyles">
+        <div class="accordion-item">
+          <button class="accordion-header">Section 1</button>
+          <div class="accordion-content">
+            @if (isContainer()) {
+              @for (child of component().children; track child.id) {
+                <app-component-renderer
+                  [component]="child"
+                  [isEditMode]="isEditMode()"
+                  (componentClick)="componentClick.emit($event)"
+                  (componentDoubleClick)="componentDoubleClick.emit($event)">
+                </app-component-renderer>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    }
+    
+    @case ('carousel') {
+      <div class="rendered-carousel" [ngStyle]="component().properties.styles | toStyles">
+        <button class="carousel-prev">‹</button>
+        <div class="carousel-content">
+          @if (isContainer()) {
+            @for (child of component().children; track child.id) {
+              <app-component-renderer
+                [component]="child"
+                [isEditMode]="isEditMode()"
+                (componentClick)="componentClick.emit($event)"
+                (componentDoubleClick)="componentDoubleClick.emit($event)">
+              </app-component-renderer>
+            }
+          }
+        </div>
+        <button class="carousel-next">›</button>
+      </div>
+    }
+    
+    <!-- ============================================ -->
+    <!-- FALLBACK -->
+    <!-- ============================================ -->
+    
+    @default {
+      <div class="unknown-component" [ngStyle]="component().properties.styles | toStyles">
+        <span>{{ component().displayName }}</span>
+        <small>Type: {{ component().type }}</small>
+      </div>
+    }
+  }
+  
+</div>

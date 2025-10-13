@@ -1,0 +1,389 @@
+// src/app/features/visual-builder/components/builder-canvas/builder-canvas.component.scss
+
+.builder-canvas {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  // ===== CANVAS CONTENT =====
+  .canvas-content {
+    flex: 1;
+    padding: 24px;
+    overflow: auto;
+    position: relative;
+    min-height: 100%;
+    
+    &::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: var(--border-color, #e0e0e0);
+      border-radius: 4px;
+      
+      &:hover {
+        background: var(--text-secondary, #757575);
+      }
+    }
+  }
+
+  // ===== ÉTAT VIDE =====
+  .canvas-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    padding: 40px;
+  }
+
+  .empty-content {
+    text-align: center;
+    max-width: 400px;
+
+    .empty-icon {
+      font-size: 64px;
+      display: block;
+      margin-bottom: 24px;
+      opacity: 0.5;
+    }
+
+    h3 {
+      margin: 0 0 12px 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary, #212121);
+    }
+
+    p {
+      margin: 0 0 24px 0;
+      font-size: 14px;
+      color: var(--text-secondary, #757575);
+      line-height: 1.6;
+    }
+
+    .empty-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: var(--surface-color, #f5f5f5);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-secondary, #757575);
+
+      .hint-icon {
+        font-size: 16px;
+      }
+    }
+  }
+
+  // ===== LISTE DES COMPOSANTS =====
+  .components-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  // ===== COMPOSANT CANVAS =====
+  .canvas-component {
+    position: relative;
+    padding: 16px;
+    background: var(--surface-color, #fff);
+    border: 2px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--primary-light, #90caf9);
+    }
+
+    &.selected {
+      border-color: var(--primary-color, #2196f3);
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+
+    &.hovered:not(.selected) {
+      background: var(--hover-color, #f5f5f5);
+    }
+
+    &.container {
+      border-style: dashed;
+      background: var(--surface-color, #fafafa);
+
+      &.drop-zone-active {
+        border-color: var(--success-color, #4caf50);
+        background: rgba(76, 175, 80, 0.05);
+      }
+    }
+
+    &.hidden {
+      opacity: 0.4;
+    }
+
+    &.locked {
+      cursor: not-allowed;
+      border-color: var(--warning-color, #ff9800);
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 10px,
+          rgba(255, 152, 0, 0.05) 10px,
+          rgba(255, 152, 0, 0.05) 20px
+        );
+        pointer-events: none;
+      }
+    }
+  }
+
+  // ===== HEADER DU COMPOSANT =====
+  .component-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+
+    .component-icon {
+      font-size: 20px;
+    }
+
+    .component-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary, #212121);
+    }
+
+    .component-type {
+      font-size: 11px;
+      color: var(--text-secondary, #757575);
+      padding: 2px 8px;
+      background: var(--surface-color, #f5f5f5);
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .component-badges {
+      margin-left: auto;
+      display: flex;
+      gap: 4px;
+
+      .badge {
+        font-size: 14px;
+        opacity: 0.7;
+      }
+    }
+  }
+
+  // ===== CONTENU DU COMPOSANT =====
+  .component-content {
+    min-height: 40px;
+  }
+
+  .content-preview {
+    padding: 8px;
+
+    .preview-text {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-primary, #212121);
+      line-height: 1.6;
+    }
+
+    .preview-button {
+      padding: 8px 16px;
+      background: var(--primary-color, #2196f3);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: not-allowed;
+    }
+
+    .preview-image {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      background: var(--surface-color, #f5f5f5);
+      border: 2px dashed var(--border-color, #e0e0e0);
+      border-radius: 8px;
+
+      .image-placeholder {
+        font-size: 48px;
+        margin-bottom: 8px;
+      }
+
+      small {
+        font-size: 12px;
+        color: var(--text-secondary, #757575);
+      }
+    }
+
+    .preview-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color, #e0e0e0);
+      border-radius: 4px;
+      font-size: 14px;
+      background: var(--surface-color, #fafafa);
+      cursor: not-allowed;
+    }
+  }
+
+  // ===== CONTAINER DROP ZONE =====
+  .container-drop-zone {
+    min-height: 100px;
+    padding: 16px;
+    background: var(--surface-color, #fafafa);
+    border: 2px dashed var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    transition: all 0.2s;
+
+    &.active {
+      border-color: var(--success-color, #4caf50);
+      background: rgba(76, 175, 80, 0.05);
+    }
+  }
+
+  .container-children {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .container-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+
+    .empty-icon {
+      font-size: 40px;
+      opacity: 0.3;
+      margin-bottom: 8px;
+    }
+
+    .empty-text {
+      font-size: 13px;
+      color: var(--text-secondary, #757575);
+    }
+  }
+
+  // ===== OUTLINES =====
+  .selection-outline {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid var(--primary-color, #2196f3);
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .hover-outline {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid var(--primary-light, #90caf9);
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 9;
+  }
+
+  // ===== DROP INDICATOR =====
+  .drop-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 40px;
+    background: var(--surface-color, #fff);
+    border: 2px dashed var(--primary-color, #2196f3);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    animation: pulse 1.5s ease-in-out infinite;
+
+    .indicator-icon {
+      font-size: 48px;
+    }
+
+    .indicator-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--primary-color, #2196f3);
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: translate(-50%, -50%) scale(1.02);
+    }
+  }
+
+  // ===== ÉTAT DRAGGING =====
+  &.dragging {
+    .canvas-content {
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 20px,
+        rgba(33, 150, 243, 0.03) 20px,
+        rgba(33, 150, 243, 0.03) 40px
+      );
+    }
+  }
+
+  // ===== RESPONSIVE =====
+  @media (max-width: 768px) {
+    .canvas-content {
+      padding: 16px;
+    }
+
+    .canvas-component {
+      padding: 12px;
+    }
+
+    .component-header {
+      .component-type {
+        display: none;
+      }
+    }
+  }
+}

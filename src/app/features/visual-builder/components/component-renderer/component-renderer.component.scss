@@ -1,0 +1,326 @@
+// src/app/features/visual-builder/components/component-renderer/component-renderer.component.scss
+
+// ============================================
+// VARIABLES
+// ============================================
+
+$border-color: #e0e0e0;
+$primary-color: #4a90e2;
+$text-color: #333333;
+
+// ============================================
+// WRAPPER PRINCIPAL
+// ============================================
+
+.component-renderer {
+  position: relative;
+  
+  // Mode édition
+  &.edit-mode {
+    cursor: pointer;
+    
+    &:hover {
+      outline: 1px dashed $primary-color;
+      outline-offset: 2px;
+    }
+  }
+  
+  // État sélectionné
+  &.selected {
+    outline: 2px solid $primary-color !important;
+    outline-offset: 2px;
+  }
+}
+
+// ============================================
+// CONTAINERS VIDES
+// ============================================
+
+.empty-container {
+  padding: 2rem;
+  text-align: center;
+  color: #999;
+  border: 2px dashed $border-color;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+// ============================================
+// LAYOUT COMPONENTS
+// ============================================
+
+.rendered-container,
+.rendered-section {
+  display: block;
+  width: 100%;
+}
+
+.rendered-grid {
+  display: grid;
+  width: 100%;
+}
+
+.rendered-flexbox {
+  display: flex;
+  width: 100%;
+}
+
+// ============================================
+// FORM COMPONENTS
+// ============================================
+
+.rendered-input,
+.rendered-textarea,
+.rendered-select {
+  font-family: inherit;
+  font-size: inherit;
+  
+  &:focus {
+    outline: 2px solid $primary-color;
+    outline-offset: 2px;
+  }
+}
+
+.rendered-button {
+  font-family: inherit;
+  cursor: pointer;
+  
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.rendered-checkbox,
+.rendered-radio {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  
+  input {
+    margin-right: 0.5rem;
+    cursor: pointer;
+  }
+}
+
+// ============================================
+// CONTENT COMPONENTS
+// ============================================
+
+.rendered-heading {
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+  }
+}
+
+// ============================================
+// TABLE
+// ============================================
+
+table {
+  border-collapse: collapse;
+  
+  th, td {
+    padding: 0.75rem;
+    text-align: left;
+    border: 1px solid $border-color;
+  }
+  
+  th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+  }
+}
+
+// ============================================
+// CODE
+// ============================================
+
+pre {
+  margin: 0;
+  overflow: auto;
+  
+  code {
+    display: block;
+    font-family: 'Courier New', monospace;
+  }
+}
+
+// ============================================
+// MEDIA COMPONENTS
+// ============================================
+
+.rendered-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.rendered-video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.rendered-icon {
+  display: inline-block;
+  line-height: 1;
+}
+
+.rendered-gallery {
+  display: grid;
+}
+
+// ============================================
+// CUSTOM COMPONENTS
+// ============================================
+
+.rendered-card {
+  display: block;
+}
+
+.rendered-modal {
+  .modal-content {
+    position: relative;
+  }
+}
+
+.rendered-tabs {
+  .tabs-header {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid $border-color;
+    margin-bottom: 1rem;
+    
+    .tab-button {
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        color: $primary-color;
+      }
+      
+      &.active {
+        color: $primary-color;
+        border-bottom-color: $primary-color;
+      }
+    }
+  }
+  
+  .tabs-content {
+    padding: 1rem 0;
+  }
+}
+
+.rendered-accordion {
+  .accordion-item {
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    
+    .accordion-header {
+      width: 100%;
+      padding: 1rem;
+      background: #f8f9fa;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      &:hover {
+        background: #e9ecef;
+      }
+      
+      &::after {
+        content: '▼';
+        font-size: 0.75rem;
+      }
+    }
+    
+    .accordion-content {
+      padding: 1rem;
+      border-top: 1px solid $border-color;
+    }
+  }
+}
+
+.rendered-carousel {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  
+  .carousel-prev,
+  .carousel-next {
+    background: $primary-color;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    
+    &:hover {
+      background: darken($primary-color, 10%);
+    }
+  }
+  
+  .carousel-content {
+    flex: 1;
+    overflow: hidden;
+  }
+}
+
+// ============================================
+// COMPOSANT INCONNU
+// ============================================
+
+.unknown-component {
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  text-align: center;
+  
+  span {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  
+  small {
+    color: #666;
+    font-size: 0.75rem;
+  }
+}
+
+// ============================================
+// RESET DES MARGES
+// ============================================
+
+:host {
+  display: block;
+  
+  // Reset des marges pour un meilleur contrôle
+  * {
+    box-sizing: border-box;
+  }
+}

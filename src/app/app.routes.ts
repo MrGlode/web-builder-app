@@ -32,12 +32,14 @@ export const routes: Routes = [
           .then(m => m.DESIGN_SYSTEM_ROUTES),
         title: 'Design System'
       },
+      */
       {
         path: 'visual-builder',
         loadChildren: () => import('./features/visual-builder/visual-builder.routes')
           .then(m => m.VISUAL_BUILDER_ROUTES),
         title: 'Visual Builder'
       },
+      /** 
       {
         path: 'api-orchestrator',
         loadChildren: () => import('./features/api-orchestrator/api-orchestrator.routes')

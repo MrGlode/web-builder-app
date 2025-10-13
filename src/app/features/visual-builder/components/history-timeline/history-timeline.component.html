@@ -1,0 +1,89 @@
+<!-- src/app/features/visual-builder/components/history-timeline/history-timeline.component.html -->
+
+<div class="history-timeline" [class.expanded]="isExpanded">
+  <!-- Header -->
+  <div class="timeline-header">
+    <div class="header-title">
+      <span class="icon">⏱️</span>
+      <h3>Historique</h3>
+      <span class="badge">{{ stats().totalActions }}</span>
+    </div>
+    
+    <div class="header-actions">
+      <button 
+        class="btn-icon" 
+        [disabled]="!canUndo()"
+        (click)="undo()"
+        title="Annuler (Ctrl+Z)">
+        ↶
+      </button>
+      
+      <button 
+        class="btn-icon" 
+        [disabled]="!canRedo()"
+        (click)="redo()"
+        title="Refaire (Ctrl+Shift+Z)">
+        ↷
+      </button>
+      
+      <button 
+        class="btn-icon" 
+        (click)="toggleExpand()"
+        title="Réduire/Agrandir">
+        {{ isExpanded ? '−' : '+' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Timeline List -->
+  <div class="timeline-content" *ngIf="isExpanded">
+    
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="actions().length === 0">
+      <span class="empty-icon">📝</span>
+      <p>Aucune action encore</p>
+      <small>Les actions apparaîtront ici</small>
+    </div>
+
+    <!-- Actions List -->
+    <div class="actions-list" *ngIf="actions().length > 0">
+      <div 
+        *ngFor="let action of actions(); let i = index"
+        class="action-item"
+        [class]="getActionClass(action.type)"
+        [class.current]="i === stats().currentIndex"
+        (click)="goToAction(action.id)">
+        
+        <div class="action-marker">
+          <span class="action-icon">{{ getActionIcon(action.type) }}</span>
+          <div class="action-line"></div>
+        </div>
+        
+        <div class="action-content">
+          <div class="action-description">
+            {{ action.description }}
+          </div>
+          <div class="action-time">
+            {{ formatTime(action.timestamp) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Stats -->
+    <div class="timeline-footer" *ngIf="actions().length > 0">
+      <button 
+        class="btn-clear" 
+        (click)="clearHistory()"
+        title="Effacer l'historique">
+        🗑️ Effacer
+      </button>
+      
+      <div class="stats">
+        <small>
+          {{ stats().currentIndex + 1 }} / {{ stats().totalActions }}
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
