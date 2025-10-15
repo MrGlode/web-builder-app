@@ -8,19 +8,7 @@
   
   <!-- ===== TOOLBAR ===== -->
   <header class="builder-header">
-    <app-builder-toolbar
-      [viewMode]="viewMode()"
-      [zoomLevel]="zoomLevel()"
-      [canUndo]="canUndo()"
-      [canRedo]="canRedo()"
-      (viewModeChange)="onViewModeChange($event)"
-      (zoomChange)="onZoomChange($event)"
-      (undo)="onUndo()"
-      (redo)="onRedo()"
-      (save)="onSave()"
-      (preview)="onPreview()"
-      (export)="onExport()"
-    ></app-builder-toolbar>
+    <app-builder-toolbar></app-builder-toolbar>
   </header>
   
   <!-- ===== MAIN CONTENT ===== -->
@@ -29,8 +17,7 @@
     <!-- ===== LEFT SIDEBAR: Component Palette ===== -->
     <aside class="builder-sidebar left">
       <app-component-palette
-        (componentAdded)="onComponentAdded($event)"
-        (componentDragged)="onComponentDragged($event)"
+        (componentClick)="onComponentClick($event)"
       ></app-component-palette>
     </aside>
     
@@ -39,10 +26,7 @@
       <app-builder-canvas
         [components]="components()"
         [selectedComponentId]="selectedComponent()?.id || null"
-        [viewMode]="viewMode()"
-        [zoomLevel]="zoomLevel()"
         (componentSelected)="onComponentSelected($event)"
-        (componentHovered)="onComponentHovered($event)"
         (componentDropped)="onComponentDropped($event)"
       ></app-builder-canvas>
     </main>
@@ -75,15 +59,13 @@
         
         <!-- Layers Panel -->
         @if (activeRightPanel() === 'layers') {
-          <app-layers-panel
-            [components]="components()"
-            [selectedComponentId]="selectedComponent()?.id || null"
-            (layerSelected)="onLayerSelected($event)"
-            (layersReordered)="onLayersReordered($event)"
-            (componentDeleted)="onComponentDeleted($event)"
-            (visibilityToggled)="onVisibilityToggled($event)"
-            (lockToggled)="onLockToggled($event)"
-          ></app-layers-panel>
+          <div class="layers-placeholder">
+            <div style="padding: 40px; text-align: center; color: #999;">
+              <p style="font-size: 48px; margin-bottom: 16px;">📋</p>
+              <p>Layers Panel</p>
+              <p style="font-size: 12px; margin-top: 8px;">À implémenter</p>
+            </div>
+          </div>
         }
         
         <!-- Properties Panel -->
@@ -102,7 +84,7 @@
     
   </div>
   
-  <!-- ===== STATUS BAR (Optional) ===== -->
+  <!-- ===== STATUS BAR ===== -->
   <footer class="builder-footer">
     <div class="status-info">
       <span class="status-item">
@@ -113,9 +95,6 @@
           📌 {{ selectedComponent()?.displayName }}
         </span>
       }
-      <span class="status-item">
-        🔍 {{ zoomLevel() }}%
-      </span>
     </div>
   </footer>
   

@@ -1,3 +1,5 @@
+// src/app/features/visual-builder/components/visual-builder/visual-builder.component.ts
+
 import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -14,7 +16,6 @@ import { PropertiesPanelComponent } from './components/properties-panel/properti
 
 // Models
 import { BuilderComponent } from './models/component.model';
-import { ViewMode } from './models/page.model';
 
 @Component({
   selector: 'app-visual-builder',
@@ -25,7 +26,7 @@ import { ViewMode } from './models/page.model';
     ComponentPaletteComponent,
     BuilderCanvasComponent,
     LayersPanelComponent,
-    PropertiesPanelComponent  // ← AJOUT IMPORTANT
+    PropertiesPanelComponent  // ← Ajout du Properties Panel
   ],
   templateUrl: './visual-builder.component.html',
   styleUrls: ['./visual-builder.component.scss']
@@ -39,28 +40,19 @@ export class VisualBuilderComponent {
   
   // ===== STATE =====
   
-  /** Liste des composants */
-  components = this.builderService.components;
+  /** Liste des composants (exposée depuis le service) */
+  components = computed(() => {
+    // Accès public aux composants
+    return this.builderService.getComponents();
+  });
   
   /** Composant sélectionné */
-  selectedComponent = this.builderService.selectedComponent;
+  selectedComponent = signal<BuilderComponent | null>(null);
   
-  /** Mode de vue actuel */
-  viewMode = signal<ViewMode>('desktop');
-  
-  /** Niveau de zoom */
-  zoomLevel = signal<number>(100);
-  
-  /** Panneau actif (layers ou properties) */
+  /** Panneau actif à droite */
   activeRightPanel = signal<'layers' | 'properties'>('properties');
   
   // ===== COMPUTED =====
-  
-  /** Indique si on peut undo */
-  canUndo = this.historyService.canUndo;
-  
-  /** Indique si on peut redo */
-  canRedo = this.historyService.canRedo;
   
   /** Nombre de composants */
   componentCount = computed(() => this.components().length);
@@ -69,67 +61,6 @@ export class VisualBuilderComponent {
   
   ngOnInit(): void {
     console.log('🎨 Visual Builder initialized');
-    
-    // Charger un projet ou créer une page vide
-    this.initializeEmptyPage();
-  }
-  
-  // ===== TOOLBAR ACTIONS =====
-  
-  /**
-   * Change le mode de vue (desktop, tablet, mobile)
-   */
-  onViewModeChange(mode: ViewMode): void {
-    this.viewMode.set(mode);
-    console.log('📱 View mode changed to:', mode);
-  }
-  
-  /**
-   * Change le niveau de zoom
-   */
-  onZoomChange(level: number): void {
-    this.zoomLevel.set(level);
-    console.log('🔍 Zoom level:', level);
-  }
-  
-  /**
-   * Annule la dernière action
-   */
-  onUndo(): void {
-    this.historyService.undo();
-    console.log('↩️ Undo');
-  }
-  
-  /**
-   * Refait la dernière action annulée
-   */
-  onRedo(): void {
-    this.historyService.redo();
-    console.log('↪️ Redo');
-  }
-  
-  /**
-   * Sauvegarde le projet
-   */
-  onSave(): void {
-    console.log('💾 Saving project...');
-    // TODO: Implémenter la sauvegarde
-  }
-  
-  /**
-   * Prévisualise la page
-   */
-  onPreview(): void {
-    console.log('👁️ Preview');
-    // TODO: Implémenter la prévisualisation
-  }
-  
-  /**
-   * Exporte le projet
-   */
-  onExport(): void {
-    console.log('📤 Export');
-    // TODO: Implémenter l'export
   }
   
   // ===== COMPONENT PALETTE ACTIONS =====
@@ -139,15 +70,21 @@ export class VisualBuilderComponent {
    */
   onComponentAdded(event: { type: string }): void {
     console.log('➕ Adding component:', event.type);
-    this.builderService.addComponentFromPalette(event.type);
+    
+    // Créer un nouveau composant
+    const newComponent = this.createComponentFromType(event.type);
+    
+    // L'ajouter à la liste
+    const currentComponents = this.components();
+    this.builderService.setComponents([...currentComponents, newComponent]);
   }
   
   /**
-   * Gère le drag d'un composant depuis la palette
+   * Gère le clic sur un composant depuis la palette
    */
-  onComponentDragged(event: { type: string }): void {
-    console.log('🎯 Component dragged:', event.type);
-    // Le drop sera géré par le canvas
+  onComponentClick(event: { type: string }): void {
+    console.log('🖱️ Component clicked from palette:', event.type);
+    this.onComponentAdded(event);
   }
   
   // ===== CANVAS ACTIONS =====
@@ -157,17 +94,10 @@ export class VisualBuilderComponent {
    */
   onComponentSelected(component: BuilderComponent): void {
     console.log('📌 Component selected:', component.displayName);
-    this.builderService.selectComponent(component.id);
+    this.selectedComponent.set(component);
     
     // Afficher le panneau de propriétés
     this.activeRightPanel.set('properties');
-  }
-  
-  /**
-   * Gère le survol d'un composant
-   */
-  onComponentHovered(componentId: string | null): void {
-    // TODO: Gérer le hover
   }
   
   /**
@@ -179,52 +109,7 @@ export class VisualBuilderComponent {
     index?: number 
   }): void {
     console.log('📥 Component dropped:', event);
-    this.builderService.addComponentFromPalette(
-      event.componentType,
-      event.parentId,
-      event.index
-    );
-  }
-  
-  // ===== LAYERS PANEL ACTIONS =====
-  
-  /**
-   * Gère la sélection depuis le layers panel
-   */
-  onLayerSelected(componentId: string): void {
-    this.builderService.selectComponent(componentId);
-  }
-  
-  /**
-   * Gère la réorganisation des composants
-   */
-  onLayersReordered(event: { componentId: string; newIndex: number }): void {
-    console.log('🔄 Layers reordered:', event);
-    // TODO: Implémenter la réorganisation
-  }
-  
-  /**
-   * Gère la suppression d'un composant
-   */
-  onComponentDeleted(componentId: string): void {
-    console.log('🗑️ Component deleted:', componentId);
-    this.builderService.removeComponent(componentId);
-  }
-  
-  /**
-   * Toggle la visibilité d'un composant
-   */
-  onVisibilityToggled(componentId: string): void {
-    console.log('👁️ Visibility toggled:', componentId);
-    // TODO: Implémenter le toggle de visibilité
-  }
-  
-  /**
-   * Toggle le verrouillage d'un composant
-   */
-  onLockToggled(componentId: string): void {
-    console.log('🔒 Lock toggled:', componentId);
-    // TODO: Implémenter le toggle de verrouillage
+    this.onComponentAdded({ type: event.componentType });
   }
   
   // ===== PROPERTIES PANEL ACTIONS =====
@@ -240,10 +125,14 @@ export class VisualBuilderComponent {
   }): void {
     console.log('📝 Property changed:', event);
     
+    // Trouver le composant
     const component = this.findComponentById(event.componentId);
-    if (!component) return;
+    if (!component) {
+      console.warn('Component not found:', event.componentId);
+      return;
+    }
     
-    // Mise à jour de la propriété selon la section
+    // Mettre à jour la propriété selon la section
     switch (event.section) {
       case 'content':
         if (component.properties.content) {
@@ -260,21 +149,21 @@ export class VisualBuilderComponent {
         break;
         
       case 'events':
-        if (component.properties.events) {
-          (component.properties.events as any)[event.property] = event.value;
+        if (!component.properties.events) {
+          component.properties.events = {};
         }
+        (component.properties.events as any)[event.property] = event.value;
         break;
     }
     
-    // Sauvegarder dans l'historique
-    this.historyService.saveState({
-      type: 'update',
-      description: `Updated ${event.section}.${event.property}`,
-      data: { componentId: event.componentId, event }
-    });
+    // Mettre à jour la liste des composants pour déclencher le refresh
+    const updatedComponents = [...this.components()];
+    this.builderService.setComponents(updatedComponents);
     
-    // Mettre à jour l'affichage
-    this.builderService.components.set([...this.components()]);
+    // Mettre à jour le composant sélectionné pour rafraîchir le panel
+    this.selectedComponent.set({ ...component });
+    
+    console.log('✅ Component updated:', component);
   }
   
   /**
@@ -283,7 +172,34 @@ export class VisualBuilderComponent {
   onPropertiesPanelClosed(): void {
     console.log('❌ Properties panel closed');
     // Optionnel: désélectionner le composant
-    // this.builderService.selectComponent(null);
+    // this.selectedComponent.set(null);
+  }
+  
+  // ===== LAYERS PANEL ACTIONS =====
+  
+  /**
+   * Gère la sélection depuis le layers panel
+   */
+  onLayerSelected(componentId: string): void {
+    const component = this.findComponentById(componentId);
+    if (component) {
+      this.onComponentSelected(component);
+    }
+  }
+  
+  /**
+   * Gère la suppression d'un composant
+   */
+  onComponentDeleted(componentId: string): void {
+    console.log('🗑️ Component deleted:', componentId);
+    
+    const updatedComponents = this.components().filter(c => c.id !== componentId);
+    this.builderService.setComponents(updatedComponents);
+    
+    // Désélectionner si c'était le composant sélectionné
+    if (this.selectedComponent()?.id === componentId) {
+      this.selectedComponent.set(null);
+    }
   }
   
   // ===== RIGHT PANEL ACTIONS =====
@@ -301,48 +217,166 @@ export class VisualBuilderComponent {
    * Gère les raccourcis clavier
    */
   onKeyDown(event: KeyboardEvent): void {
-    // Ctrl/Cmd + Z : Undo
-    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
-      event.preventDefault();
-      this.onUndo();
-    }
-    
-    // Ctrl/Cmd + Shift + Z : Redo
-    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && event.shiftKey) {
-      event.preventDefault();
-      this.onRedo();
-    }
-    
-    // Ctrl/Cmd + S : Save
-    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-      event.preventDefault();
-      this.onSave();
-    }
-    
     // Delete : Supprimer le composant sélectionné
     if (event.key === 'Delete' && this.selectedComponent()) {
       event.preventDefault();
       this.onComponentDeleted(this.selectedComponent()!.id);
+    }
+    
+    // Escape : Désélectionner
+    if (event.key === 'Escape') {
+      this.selectedComponent.set(null);
     }
   }
   
   // ===== PRIVATE METHODS =====
   
   /**
-   * Initialise une page vide
-   */
-  private initializeEmptyPage(): void {
-    // Créer un container de base si vide
-    if (this.components().length === 0) {
-      console.log('📄 Initializing empty page');
-      // Optionnel: ajouter un container par défaut
-    }
-  }
-  
-  /**
    * Trouve un composant par son ID
    */
   private findComponentById(id: string): BuilderComponent | null {
-    return this.builderService.findComponentById(id);
+    const components = this.components();
+    
+    // Fonction récursive pour chercher dans les enfants
+    const search = (comps: BuilderComponent[]): BuilderComponent | null => {
+      for (const comp of comps) {
+        if (comp.id === id) {
+          return comp;
+        }
+        
+        if (comp.children && comp.children.length > 0) {
+          const found = search(comp.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    return search(components);
+  }
+  
+  /**
+   * Crée un nouveau composant à partir d'un type
+   */
+  private createComponentFromType(type: string): BuilderComponent {
+    // Générer un ID unique
+    const id = this.generateId(type);
+    
+    // Créer un composant de base selon le type
+    const component: BuilderComponent = {
+      id: id,
+      type: type as any,
+      category: this.getCategoryForType(type),
+      displayName: this.getDisplayNameForType(type),
+      order: this.components().length,
+      properties: {
+        content: this.getDefaultContent(type),
+        styles: this.getDefaultStyles(type),
+        attributes: {}
+      }
+    };
+    
+    return component;
+  }
+  
+  /**
+   * Génère un ID unique
+   */
+  private generateId(type: string): string {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 9);
+    return `${type}_${timestamp}_${random}`;
+  }
+  
+  /**
+   * Obtient la catégorie pour un type
+   */
+  private getCategoryForType(type: string): 'layout' | 'forms' | 'content' | 'media' | 'custom' {
+    const layoutTypes = ['container', 'section', 'grid', 'flexbox', 'divider'];
+    const formTypes = ['input', 'textarea', 'select', 'checkbox', 'radio', 'button'];
+    const contentTypes = ['heading', 'paragraph', 'list', 'table', 'code'];
+    const mediaTypes = ['image', 'video', 'icon', 'gallery'];
+    
+    if (layoutTypes.includes(type)) return 'layout';
+    if (formTypes.includes(type)) return 'forms';
+    if (contentTypes.includes(type)) return 'content';
+    if (mediaTypes.includes(type)) return 'media';
+    return 'custom';
+  }
+  
+  /**
+   * Obtient le nom d'affichage pour un type
+   */
+  private getDisplayNameForType(type: string): string {
+    const names: Record<string, string> = {
+      container: 'Container',
+      section: 'Section',
+      heading: 'Heading',
+      paragraph: 'Paragraph',
+      button: 'Button',
+      input: 'Input',
+      image: 'Image',
+      // ... autres types
+    };
+    
+    return names[type] || type.charAt(0).toUpperCase() + type.slice(1);
+  }
+  
+  /**
+   * Obtient le contenu par défaut pour un type
+   */
+  private getDefaultContent(type: string): any {
+    const defaults: Record<string, any> = {
+      heading: { text: 'Heading' },
+      paragraph: { text: 'This is a paragraph.' },
+      button: { text: 'Button', label: 'Click me' },
+      input: { placeholder: 'Enter text...', value: '' },
+      image: { src: 'https://via.placeholder.com/300', alt: 'Placeholder' },
+    };
+    
+    return defaults[type] || {};
+  }
+  
+  /**
+   * Obtient les styles par défaut pour un type
+   */
+  private getDefaultStyles(type: string): any {
+    const baseStyles = {
+      padding: '10px',
+      margin: '0',
+    };
+    
+    const typeSpecificStyles: Record<string, any> = {
+      container: {
+        ...baseStyles,
+        display: 'block',
+        width: '100%',
+        backgroundColor: '#f5f5f5',
+        border: '1px solid #e0e0e0',
+      },
+      heading: {
+        ...baseStyles,
+        fontSize: '24px',
+        fontWeight: 'bold',
+        color: '#333333',
+      },
+      paragraph: {
+        ...baseStyles,
+        fontSize: '16px',
+        lineHeight: '1.5',
+        color: '#666666',
+      },
+      button: {
+        ...baseStyles,
+        padding: '10px 20px',
+        backgroundColor: '#007bff',
+        color: '#ffffff',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+      },
+    };
+    
+    return typeSpecificStyles[type] || baseStyles;
   }
 }
