@@ -169,6 +169,7 @@ export interface BuilderComponent {
   isLocked?: boolean;
   isHidden?: boolean;
   isSelected?: boolean;
+  layerId?: string;
 }
 
 /**

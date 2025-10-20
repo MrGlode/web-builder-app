@@ -1,4 +1,4 @@
-// src/app/features/visual-builder/components/visual-builder/visual-builder.component.ts
+// src/app/features/visual-builder/visual-builder.component.ts
 
 import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -16,6 +16,7 @@ import { PropertiesPanelComponent } from './components/properties-panel/properti
 
 // Models
 import { BuilderComponent } from './models/component.model';
+import { ActionType } from './models/history.model';
 
 @Component({
   selector: 'app-visual-builder',
@@ -26,7 +27,7 @@ import { BuilderComponent } from './models/component.model';
     ComponentPaletteComponent,
     BuilderCanvasComponent,
     LayersPanelComponent,
-    PropertiesPanelComponent  // ← Ajout du Properties Panel
+    PropertiesPanelComponent
   ],
   templateUrl: './visual-builder.component.html',
   styleUrls: ['./visual-builder.component.scss']
@@ -42,12 +43,14 @@ export class VisualBuilderComponent {
   
   /** Liste des composants (exposée depuis le service) */
   components = computed(() => {
-    // Accès public aux composants
     return this.builderService.getComponents();
   });
   
-  /** Composant sélectionné */
+  /** Composant sélectionné (simple) */
   selectedComponent = signal<BuilderComponent | null>(null);
+  
+  /** 🆕 Composants sélectionnés (multiple) */
+  selectedComponents = signal<BuilderComponent[]>([]);
   
   /** Panneau actif à droite */
   activeRightPanel = signal<'layers' | 'properties'>('properties');
@@ -57,48 +60,100 @@ export class VisualBuilderComponent {
   /** Nombre de composants */
   componentCount = computed(() => this.components().length);
   
+  /** 🆕 Indique si plusieurs composants sont sélectionnés */
+  hasMultipleSelection = computed(() => this.selectedComponents().length > 1);
+  
+  /** 🆕 IDs des composants sélectionnés (pour le template) */
+  selectedComponentIds = computed(() => this.selectedComponents().map(c => c.id));
+  
   // ===== LIFECYCLE =====
   
   ngOnInit(): void {
-    console.log('🎨 Visual Builder initialized');
+    console.log('🎨 Visual Builder initialized with Multi-Selection support');
   }
   
-  // ===== COMPONENT PALETTE ACTIONS =====
+  // ===== CANVAS ACTIONS - SÉLECTION =====
   
   /**
-   * Gère l'ajout d'un composant depuis la palette
-   */
-  onComponentAdded(event: { type: string }): void {
-    console.log('➕ Adding component:', event.type);
-    
-    // Créer un nouveau composant
-    const newComponent = this.createComponentFromType(event.type);
-    
-    // L'ajouter à la liste
-    const currentComponents = this.components();
-    this.builderService.setComponents([...currentComponents, newComponent]);
-  }
-  
-  /**
-   * Gère le clic sur un composant depuis la palette
-   */
-  onComponentClick(event: { type: string }): void {
-    console.log('🖱️ Component clicked from palette:', event.type);
-    this.onComponentAdded(event);
-  }
-  
-  // ===== CANVAS ACTIONS =====
-  
-  /**
-   * Gère la sélection d'un composant
+   * 🔄 MODIFIÉ : Gère la sélection d'un composant (simple)
+   * Maintenu pour compatibilité avec l'ancien système
    */
   onComponentSelected(component: BuilderComponent): void {
-    console.log('📌 Component selected:', component.displayName);
+    console.log('📌 Component selected (single):', component.displayName);
     this.selectedComponent.set(component);
+    this.selectedComponents.set([component]);
     
     // Afficher le panneau de propriétés
     this.activeRightPanel.set('properties');
   }
+  
+  /**
+   * 🆕 NOUVEAU : Gère la sélection multiple de composants
+   */
+  onComponentsSelected(components: BuilderComponent[]): void {
+    console.log('📌 Components selected (multiple):', components.length);
+    this.selectedComponents.set(components);
+    
+    if (components.length === 1) {
+      // Sélection simple
+      this.selectedComponent.set(components[0]);
+      this.activeRightPanel.set('properties');
+    } else if (components.length > 1) {
+      // Sélection multiple
+      this.selectedComponent.set(null);
+      // Afficher le panneau de propriétés communes
+      this.activeRightPanel.set('properties');
+    } else {
+      // Aucune sélection
+      this.selectedComponent.set(null);
+    }
+  }
+  
+  /**
+   * 🆕 NOUVEAU : Gère la suppression de composants
+   */
+  onComponentsDeleted(ids: string[]): void {
+    console.log('🗑️ Deleting components:', ids.length);
+    
+    if (ids.length === 0) return;
+    
+    // 1. Récupérer les composants AVANT suppression pour l'historique
+    const componentsToDelete = ids
+      .map(id => this.findComponentById(id))
+      .filter(c => c !== null) as BuilderComponent[];
+    
+    // 2. Enregistrer dans l'historique (une action par composant)
+    componentsToDelete.forEach(component => {
+      const parentId = this.findParentId(component.id);
+      const index = this.findComponentIndex(component.id, parentId);
+      
+      this.historyService.recordAction(
+        ActionType.REMOVE_COMPONENT,
+        `Suppression de ${component.displayName}`,
+        { 
+          component: component,
+          parentId: parentId ?? undefined,
+          index: index
+        },
+        undefined
+      );
+    });
+    
+    // 3. Filtrer les composants (récursif pour gérer les enfants)
+    const currentComponents = this.components();
+    const filteredComponents = this.filterComponentsById(currentComponents, ids);
+    
+    // 4. Mettre à jour la liste
+    this.builderService.setComponents(filteredComponents);
+    
+    // 5. Réinitialiser la sélection
+    this.selectedComponent.set(null);
+    this.selectedComponents.set([]);
+    
+    console.log(`✅ ${ids.length} composant(s) supprimé(s)`);
+  }
+  
+  // ===== CANVAS ACTIONS - DRAG & DROP =====
   
   /**
    * Gère le drop d'un composant sur le canvas
@@ -112,10 +167,45 @@ export class VisualBuilderComponent {
     this.onComponentAdded({ type: event.componentType });
   }
   
+  // ===== COMPONENT PALETTE ACTIONS =====
+  
+  /**
+   * Gère l'ajout d'un composant depuis la palette
+   */
+  onComponentAdded(event: { type: string }): void {
+    console.log('➕ Adding component:', event.type);
+    
+    // Créer un nouveau composant
+    const newComponent = this.createComponentFromType(event.type);
+    
+    // Ajouter à la liste
+    const currentComponents = this.components();
+    this.builderService.setComponents([...currentComponents, newComponent]);
+    
+    // Enregistrer dans l'historique
+    this.historyService.recordAction(
+      ActionType.ADD_COMPONENT,
+      `Ajout d'un composant ${newComponent.displayName}`,
+      undefined,
+      { component: newComponent }
+    );
+    
+    console.log(`✅ Composant ${newComponent.displayName} ajouté`);
+  }
+  
+  /**
+   * Gère le clic sur un composant depuis la palette
+   */
+  onComponentClick(event: { type: string }): void {
+    console.log('🖱️ Component clicked from palette:', event.type);
+    this.onComponentAdded(event);
+  }
+  
   // ===== PROPERTIES PANEL ACTIONS =====
   
   /**
-   * Gère le changement d'une propriété
+   * 🔄 MODIFIÉ : Gère le changement d'une propriété
+   * Supporte maintenant l'édition groupée si plusieurs composants sélectionnés
    */
   onPropertyChanged(event: {
     componentId: string;
@@ -125,84 +215,195 @@ export class VisualBuilderComponent {
   }): void {
     console.log('📝 Property changed:', event);
     
-    // Trouver le composant
-    const component = this.findComponentById(event.componentId);
-    if (!component) {
-      console.warn('Component not found:', event.componentId);
-      return;
+    // Si plusieurs composants sélectionnés, appliquer à tous
+    if (this.hasMultipleSelection()) {
+      const selectedIds = this.selectedComponents().map(c => c.id);
+      
+      selectedIds.forEach(id => {
+        const component = this.findComponentById(id);
+        if (component) {
+          // Cloner l'état avant
+          const beforeComponent = structuredClone(component);
+          
+          // Appliquer la modification
+          this.updateComponentProperty(component, event.section, event.property, event.value);
+          
+          // Enregistrer dans l'historique
+          this.historyService.recordAction(
+            ActionType.UPDATE_COMPONENT,
+            `Modification de ${component.displayName}`,
+            { component: beforeComponent },
+            { component: structuredClone(component) }
+          );
+        }
+      });
+      
+      console.log(`✅ Propriété mise à jour pour ${selectedIds.length} composants`);
+    } else {
+      // Édition simple
+      const component = this.findComponentById(event.componentId);
+      if (component) {
+        // Cloner l'état avant
+        const beforeComponent = structuredClone(component);
+        
+        // Appliquer la modification
+        this.updateComponentProperty(component, event.section, event.property, event.value);
+        
+        // Enregistrer dans l'historique
+        this.historyService.recordAction(
+          ActionType.UPDATE_COMPONENT,
+          `Modification de ${component.displayName}`,
+          { component: beforeComponent },
+          { component: structuredClone(component) }
+        );
+      }
     }
     
-    // Mettre à jour la propriété selon la section
-    switch (event.section) {
+    // Mettre à jour la liste pour déclencher le refresh
+    const updatedComponents = [...this.components()];
+    this.builderService.setComponents(updatedComponents);
+    
+    // Mettre à jour le composant sélectionné
+    if (this.selectedComponent()) {
+      this.selectedComponent.set({...this.selectedComponent()!});
+    }
+  }
+  
+  /**
+   * Gère la fermeture du panneau de propriétés
+   */
+  onPropertiesPanelClosed(): void {
+    this.selectedComponent.set(null);
+    this.selectedComponents.set([]);
+  }
+  
+  // ===== MÉTHODES UTILITAIRES =====
+  
+  /**
+   * 🆕 NOUVEAU : Filtre les composants par IDs (récursif)
+   */
+  private filterComponentsById(
+    components: BuilderComponent[], 
+    idsToRemove: string[]
+  ): BuilderComponent[] {
+    const idsSet = new Set(idsToRemove);
+    
+    return components
+      .filter(c => !idsSet.has(c.id))
+      .map(c => ({
+        ...c,
+        children: c.children 
+          ? this.filterComponentsById(c.children, idsToRemove) 
+          : undefined
+      }));
+  }
+  
+  /**
+   * Met à jour une propriété d'un composant
+   */
+  private updateComponentProperty(
+    component: BuilderComponent,
+    section: 'content' | 'styles' | 'attributes' | 'events',
+    property: string,
+    value: any
+  ): void {
+    switch (section) {
       case 'content':
         if (component.properties.content) {
-          (component.properties.content as any)[event.property] = event.value;
+          (component.properties.content as any)[property] = value;
         }
         break;
         
       case 'styles':
-        (component.properties.styles as any)[event.property] = event.value;
+        (component.properties.styles as any)[property] = value;
         break;
         
       case 'attributes':
-        (component.properties.attributes as any)[event.property] = event.value;
+        (component.properties.attributes as any)[property] = value;
         break;
         
       case 'events':
         if (!component.properties.events) {
           component.properties.events = {};
         }
-        (component.properties.events as any)[event.property] = event.value;
+        (component.properties.events as any)[property] = value;
         break;
     }
-    
-    // Mettre à jour la liste des composants pour déclencher le refresh
-    const updatedComponents = [...this.components()];
-    this.builderService.setComponents(updatedComponents);
-    
-    // Mettre à jour le composant sélectionné pour rafraîchir le panel
-    this.selectedComponent.set({ ...component });
-    
-    console.log('✅ Component updated:', component);
   }
   
   /**
-   * Ferme le panneau de propriétés
+   * Trouve un composant par son ID (récursif)
    */
-  onPropertiesPanelClosed(): void {
-    console.log('❌ Properties panel closed');
-    // Optionnel: désélectionner le composant
-    // this.selectedComponent.set(null);
+  private findComponentById(id: string): BuilderComponent | null {
+    const find = (components: BuilderComponent[]): BuilderComponent | null => {
+      for (const comp of components) {
+        if (comp.id === id) return comp;
+        if (comp.children) {
+          const found = find(comp.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    return find(this.components());
   }
   
-  // ===== LAYERS PANEL ACTIONS =====
+  /**
+   * Trouve l'ID du parent d'un composant
+   */
+  private findParentId(childId: string): string | null {
+    const find = (components: BuilderComponent[]): string | null => {
+      for (const comp of components) {
+        if (comp.children?.some(c => c.id === childId)) {
+          return comp.id;
+        }
+        if (comp.children) {
+          const found = find(comp.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    return find(this.components());
+  }
   
   /**
-   * Gère la sélection depuis le layers panel
+   * Trouve l'index d'un composant dans son parent
    */
-  onLayerSelected(componentId: string): void {
-    const component = this.findComponentById(componentId);
-    if (component) {
-      this.onComponentSelected(component);
+  private findComponentIndex(componentId: string, parentId: string | null): number {
+    if (parentId) {
+      const parent = this.findComponentById(parentId);
+      return parent?.children?.findIndex(c => c.id === componentId) ?? -1;
     }
+    return this.components().findIndex(c => c.id === componentId);
   }
   
   /**
-   * Gère la suppression d'un composant
+   * Crée un composant à partir de son type
    */
-  onComponentDeleted(componentId: string): void {
-    console.log('🗑️ Component deleted:', componentId);
+  private createComponentFromType(type: string): BuilderComponent {
+    const id = `comp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    const updatedComponents = this.components().filter(c => c.id !== componentId);
-    this.builderService.setComponents(updatedComponents);
-    
-    // Désélectionner si c'était le composant sélectionné
-    if (this.selectedComponent()?.id === componentId) {
-      this.selectedComponent.set(null);
-    }
+    return {
+      id: id,
+      type: type as any,
+      category: 'layout',
+      displayName: type.charAt(0).toUpperCase() + type.slice(1),
+      properties: {
+        content: {
+          text: `Nouveau ${type}`
+        },
+        styles: {
+          padding: '16px',
+          margin: '8px',
+          backgroundColor: '#ffffff',
+          borderRadius: '8px'
+        },
+        attributes: {}
+      },
+      order: this.components().length
+    };
   }
-  
-  // ===== RIGHT PANEL ACTIONS =====
   
   /**
    * Change le panneau actif à droite
@@ -211,172 +412,153 @@ export class VisualBuilderComponent {
     this.activeRightPanel.set(panel);
   }
   
-  // ===== KEYBOARD SHORTCUTS =====
+  // ===== SUGGESTIONS D'AMÉLIORATION =====
   
   /**
-   * Gère les raccourcis clavier
+   * 🆕 SUGGESTION : Dupliquer les composants sélectionnés
+   */
+  onComponentsDuplicated(ids: string[]): void {
+    console.log('📋 Duplicating components:', ids.length);
+    
+    if (ids.length === 0) return;
+    
+    const toDuplicate = ids
+      .map(id => this.findComponentById(id))
+      .filter(c => c !== null) as BuilderComponent[];
+    
+    const duplicates = toDuplicate.map(comp => {
+      const duplicate: BuilderComponent = {
+        ...structuredClone(comp),
+        id: `comp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        displayName: `${comp.displayName} (copie)`,
+        order: this.components().length
+      };
+      
+      // Enregistrer dans l'historique
+      this.historyService.recordAction(
+        ActionType.DUPLICATE_COMPONENT,
+        `Duplication de ${comp.displayName}`,
+        undefined,
+        { component: duplicate }
+      );
+      
+      return duplicate;
+    });
+    
+    const currentComponents = this.components();
+    this.builderService.setComponents([...currentComponents, ...duplicates]);
+    
+    console.log(`✅ ${duplicates.length} composant(s) dupliqué(s)`);
+  }
+  
+  /**
+   * 🆕 SUGGESTION : Grouper les composants sélectionnés
+   */
+  onComponentsGrouped(ids: string[]): void {
+    console.log('📦 Grouping components:', ids.length);
+    
+    if (ids.length < 2) {
+      console.log('⚠️ Il faut au moins 2 composants pour grouper');
+      return;
+    }
+    
+    // TODO: Créer un container et y déplacer les composants
+    // TODO: Implémenter la logique de regroupement
+    
+    console.log('⚠️ Grouping not yet implemented');
+  }
+  
+  /**
+   * 🆕 SUGGESTION : Aligner les composants sélectionnés
+   */
+  onComponentsAligned(
+    ids: string[], 
+    direction: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom'
+  ): void {
+    console.log('📏 Aligning components:', direction);
+    
+    if (ids.length < 2) {
+      console.log('⚠️ Il faut au moins 2 composants pour aligner');
+      return;
+    }
+    
+    // TODO: Calculer les nouvelles positions
+    // TODO: Mettre à jour les styles de position
+    
+    console.log('⚠️ Alignment not yet implemented');
+  }
+  
+  /**
+   * 🆕 SUGGESTION : Toggle le verrouillage des composants
+   */
+  onComponentsLockToggled(event: { ids: string[], locked: boolean }): void {
+    console.log(`🔒 ${event.locked ? 'Locking' : 'Unlocking'} components:`, event.ids.length);
+    
+    event.ids.forEach(id => {
+      const component = this.findComponentById(id);
+      if (component) {
+        // Cloner avant modification
+        const beforeComponent = structuredClone(component);
+        
+        // Modifier
+        component.isLocked = event.locked;
+        
+        // Enregistrer dans l'historique
+        this.historyService.recordAction(
+          ActionType.UPDATE_COMPONENT,
+          `${event.locked ? 'Verrouillage' : 'Déverrouillage'} de ${component.displayName}`,
+          { component: beforeComponent },
+          { component: structuredClone(component) }
+        );
+      }
+    });
+    
+    const updatedComponents = [...this.components()];
+    this.builderService.setComponents(updatedComponents);
+    
+    console.log(`✅ ${event.ids.length} composant(s) ${event.locked ? 'verrouillé(s)' : 'déverrouillé(s)'}`);
+  }
+  
+  /**
+   * 🔄 OPTIONNEL : Gère les raccourcis clavier au niveau global
    */
   onKeyDown(event: KeyboardEvent): void {
-    // Delete : Supprimer le composant sélectionné
-    if (event.key === 'Delete' && this.selectedComponent()) {
+    // Laisser le BuilderCanvas gérer la plupart des raccourcis
+    // Ici, vous pouvez ajouter des raccourcis spécifiques au builder
+    
+    // Exemple : Ctrl+S pour sauvegarder
+    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
       event.preventDefault();
-      this.onComponentDeleted(this.selectedComponent()!.id);
+      this.saveProject();
+      return;
     }
     
-    // Escape : Désélectionner
-    if (event.key === 'Escape') {
-      this.selectedComponent.set(null);
+    // Exemple : Ctrl+Z pour undo
+    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+      event.preventDefault();
+      this.builderService.undo();
+      return;
+    }
+    
+    // Exemple : Ctrl+Shift+Z ou Ctrl+Y pour redo
+    if (((event.ctrlKey || event.metaKey) && event.key === 'z' && event.shiftKey) ||
+        ((event.ctrlKey || event.metaKey) && event.key === 'y')) {
+      event.preventDefault();
+      this.builderService.redo();
+      return;
     }
   }
   
-  // ===== PRIVATE METHODS =====
-  
   /**
-   * Trouve un composant par son ID
+   * Sauvegarde le projet
    */
-  private findComponentById(id: string): BuilderComponent | null {
-    const components = this.components();
-    
-    // Fonction récursive pour chercher dans les enfants
-    const search = (comps: BuilderComponent[]): BuilderComponent | null => {
-      for (const comp of comps) {
-        if (comp.id === id) {
-          return comp;
-        }
-        
-        if (comp.children && comp.children.length > 0) {
-          const found = search(comp.children);
-          if (found) return found;
-        }
-      }
-      return null;
+  private saveProject(): void {
+    console.log('💾 Saving project...');
+    // TODO: Implémenter la sauvegarde
+    const projectData = {
+      components: this.components(),
+      timestamp: Date.now()
     };
-    
-    return search(components);
-  }
-  
-  /**
-   * Crée un nouveau composant à partir d'un type
-   */
-  private createComponentFromType(type: string): BuilderComponent {
-    // Générer un ID unique
-    const id = this.generateId(type);
-    
-    // Créer un composant de base selon le type
-    const component: BuilderComponent = {
-      id: id,
-      type: type as any,
-      category: this.getCategoryForType(type),
-      displayName: this.getDisplayNameForType(type),
-      order: this.components().length,
-      properties: {
-        content: this.getDefaultContent(type),
-        styles: this.getDefaultStyles(type),
-        attributes: {}
-      }
-    };
-    
-    return component;
-  }
-  
-  /**
-   * Génère un ID unique
-   */
-  private generateId(type: string): string {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 9);
-    return `${type}_${timestamp}_${random}`;
-  }
-  
-  /**
-   * Obtient la catégorie pour un type
-   */
-  private getCategoryForType(type: string): 'layout' | 'forms' | 'content' | 'media' | 'custom' {
-    const layoutTypes = ['container', 'section', 'grid', 'flexbox', 'divider'];
-    const formTypes = ['input', 'textarea', 'select', 'checkbox', 'radio', 'button'];
-    const contentTypes = ['heading', 'paragraph', 'list', 'table', 'code'];
-    const mediaTypes = ['image', 'video', 'icon', 'gallery'];
-    
-    if (layoutTypes.includes(type)) return 'layout';
-    if (formTypes.includes(type)) return 'forms';
-    if (contentTypes.includes(type)) return 'content';
-    if (mediaTypes.includes(type)) return 'media';
-    return 'custom';
-  }
-  
-  /**
-   * Obtient le nom d'affichage pour un type
-   */
-  private getDisplayNameForType(type: string): string {
-    const names: Record<string, string> = {
-      container: 'Container',
-      section: 'Section',
-      heading: 'Heading',
-      paragraph: 'Paragraph',
-      button: 'Button',
-      input: 'Input',
-      image: 'Image',
-      // ... autres types
-    };
-    
-    return names[type] || type.charAt(0).toUpperCase() + type.slice(1);
-  }
-  
-  /**
-   * Obtient le contenu par défaut pour un type
-   */
-  private getDefaultContent(type: string): any {
-    const defaults: Record<string, any> = {
-      heading: { text: 'Heading' },
-      paragraph: { text: 'This is a paragraph.' },
-      button: { text: 'Button', label: 'Click me' },
-      input: { placeholder: 'Enter text...', value: '' },
-      image: { src: 'https://via.placeholder.com/300', alt: 'Placeholder' },
-    };
-    
-    return defaults[type] || {};
-  }
-  
-  /**
-   * Obtient les styles par défaut pour un type
-   */
-  private getDefaultStyles(type: string): any {
-    const baseStyles = {
-      padding: '10px',
-      margin: '0',
-    };
-    
-    const typeSpecificStyles: Record<string, any> = {
-      container: {
-        ...baseStyles,
-        display: 'block',
-        width: '100%',
-        backgroundColor: '#f5f5f5',
-        border: '1px solid #e0e0e0',
-      },
-      heading: {
-        ...baseStyles,
-        fontSize: '24px',
-        fontWeight: 'bold',
-        color: '#333333',
-      },
-      paragraph: {
-        ...baseStyles,
-        fontSize: '16px',
-        lineHeight: '1.5',
-        color: '#666666',
-      },
-      button: {
-        ...baseStyles,
-        padding: '10px 20px',
-        backgroundColor: '#007bff',
-        color: '#ffffff',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-      },
-    };
-    
-    return typeSpecificStyles[type] || baseStyles;
+    console.log('Project data:', projectData);
   }
 }

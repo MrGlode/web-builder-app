@@ -4,7 +4,7 @@ import { Injectable, signal, computed } from '@angular/core';
 import { BuilderComponent } from '../models/component.model';
 
 /**
- * Interface pour les informations de drag en cours
+ * Information de drag en cours
  */
 export interface DragInfo {
   componentId: string;
@@ -14,7 +14,8 @@ export interface DragInfo {
 }
 
 /**
- * Service gérant le déplacement de composants dans le canvas
+ * Service gérant le déplacement de composants
+ * Compatible avec VisualBuilderService existant
  */
 @Injectable({
   providedIn: 'root'
@@ -26,30 +27,30 @@ export class ComponentMoveService {
   /** Composant en cours de déplacement */
   private draggedComponent = signal<DragInfo | null>(null);
   
-  /** Position de la souris pendant le drag */
+  /** Position de la souris */
   private mousePosition = signal<{ x: number; y: number } | null>(null);
   
-  /** Zone de drop cible actuelle */
+  /** Zone de drop cible */
   private targetDropZone = signal<{ parentId: string | null; index: number } | null>(null);
   
-  /** Indique si le drag est valide */
+  /** Validité du drop */
   private isValidDrop = signal<boolean>(false);
   
   // ===== COMPUTED =====
   
-  /** Indique si un drag est en cours */
+  /** Drag en cours */
   isDragging = computed(() => this.draggedComponent() !== null);
   
-  /** Obtient le composant en cours de drag */
+  /** Info du drag */
   currentDragInfo = computed(() => this.draggedComponent());
   
-  /** Obtient la zone de drop cible */
+  /** Zone de drop */
   currentDropZone = computed(() => this.targetDropZone());
   
-  /** Vérifie si le drop est valide */
+  /** Drop valide */
   canDrop = computed(() => this.isValidDrop());
   
-  /** Position de la souris */
+  /** Position souris */
   currentMousePosition = computed(() => this.mousePosition());
   
   // ===== PUBLIC METHODS =====
@@ -65,7 +66,11 @@ export class ComponentMoveService {
       sourceIndex: index
     });
     
-    console.log('🎯 Drag started:', component.type, 'from index', index);
+    console.log('🎯 Move: Drag started', {
+      type: component.type,
+      from: parentId || 'root',
+      index
+    });
   }
   
   /**
@@ -84,11 +89,11 @@ export class ComponentMoveService {
   }
   
   /**
-   * Termine le drag et retourne les informations de déplacement
+   * Termine le drag et retourne les infos
    */
-  endDrag(): { 
-    component: BuilderComponent; 
-    sourceParentId: string | null; 
+  endDrag(): {
+    component: BuilderComponent;
+    sourceParentId: string | null;
     sourceIndex: number;
     targetParentId: string | null;
     targetIndex: number;
@@ -102,6 +107,14 @@ export class ComponentMoveService {
       return null;
     }
     
+    // Éviter le déplacement au même endroit
+    if (dragInfo.sourceParentId === dropZone.parentId && 
+        dragInfo.sourceIndex === dropZone.index) {
+      console.log('⚠️ Move: Same location, cancelled');
+      this.reset();
+      return null;
+    }
+    
     const result = {
       component: dragInfo.component,
       sourceParentId: dragInfo.sourceParentId,
@@ -110,37 +123,34 @@ export class ComponentMoveService {
       targetIndex: dropZone.index
     };
     
-    console.log('✅ Drag ended:', result);
+    console.log('✅ Move: Drag completed', result);
     this.reset();
     
     return result;
   }
   
   /**
-   * Annule le drag en cours
+   * Annule le drag
    */
   cancelDrag(): void {
-    console.log('❌ Drag cancelled');
+    console.log('❌ Move: Drag cancelled');
     this.reset();
   }
   
   /**
-   * Vérifie si le déplacement est valide (pas dans un enfant de soi-même)
+   * Valide un déplacement (évite les boucles)
    */
-  validateDrop(component: BuilderComponent, targetParentId: string | null, allComponents: BuilderComponent[]): boolean {
-    // Si on drop au même endroit, ce n'est pas valide
-    const dragInfo = this.draggedComponent();
-    if (dragInfo && 
-        dragInfo.sourceParentId === targetParentId) {
-      return false;
-    }
-    
-    // Si targetParentId est null (root), c'est valide
+  validateDrop(
+    component: BuilderComponent, 
+    targetParentId: string | null, 
+    allComponents: BuilderComponent[]
+  ): boolean {
+    // Drop au root toujours valide
     if (targetParentId === null) {
       return true;
     }
     
-    // Vérifie qu'on ne drop pas dans un de ses propres enfants
+    // Vérifier qu'on ne drop pas dans un enfant de soi-même
     return !this.isDescendant(component.id, targetParentId, allComponents);
   }
   
@@ -149,19 +159,16 @@ export class ComponentMoveService {
   /**
    * Vérifie si targetId est un descendant de componentId
    */
-  private isDescendant(componentId: string, targetId: string, allComponents: BuilderComponent[]): boolean {
-    const target = allComponents.find(c => c.id === targetId);
+  private isDescendant(
+    componentId: string, 
+    targetId: string, 
+    allComponents: BuilderComponent[]
+  ): boolean {
+    const target = this.findComponentById(targetId, allComponents);
     
-    if (!target) {
-      return false;
-    }
+    if (!target) return false;
+    if (target.id === componentId) return true;
     
-    // Si le target est le composant lui-même
-    if (target.id === componentId) {
-      return true;
-    }
-    
-    // Vérifie les enfants du target
     if (target.children && target.children.length > 0) {
       for (const child of target.children) {
         if (this.isDescendant(componentId, child.id, allComponents)) {
@@ -174,7 +181,26 @@ export class ComponentMoveService {
   }
   
   /**
-   * Réinitialise l'état du service
+   * Trouve un composant par ID
+   */
+  private findComponentById(
+    id: string, 
+    components: BuilderComponent[]
+  ): BuilderComponent | null {
+    for (const comp of components) {
+      if (comp.id === id) return comp;
+      
+      if (comp.children && comp.children.length > 0) {
+        const found = this.findComponentById(id, comp.children);
+        if (found) return found;
+      }
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Reset l'état
    */
   private reset(): void {
     this.draggedComponent.set(null);

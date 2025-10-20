@@ -1,0 +1,102 @@
+<!-- src/app/features/api-orchestrator/components/block-palette/block-palette.component.html -->
+
+<aside class="palette">
+  <div class="palette-header">
+    <h2>Blocs disponibles</h2>
+  </div>
+
+  <div class="palette-search">
+    <input
+      type="text"
+      placeholder="Rechercher..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange()"
+    />
+  </div>
+
+  <div class="palette-categories">
+    <!-- Groupe: Triggers -->
+    <div class="category">
+      <h3 class="category-title">Déclencheurs</h3>
+      <div class="blocks-list">
+        <div
+          *ngFor="let block of getBlocksByType('trigger')"
+          class="block-item"
+          [style.background-color]="block.color + '20'"
+          [style.border-color]="block.color"
+          draggable="true"
+          (dragstart)="onDragStart($event, block)"
+        >
+          <span class="block-icon">{{ getIcon(block.type) }}</span>
+          <div class="block-info">
+            <span class="block-name">{{ block.name }}</span>
+            <span class="block-desc">{{ block.description }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Groupe: API -->
+    <div class="category">
+      <h3 class="category-title">Intégrations</h3>
+      <div class="blocks-list">
+        <div
+          *ngFor="let block of getBlocksByType('api-call')"
+          class="block-item"
+          [style.background-color]="block.color + '20'"
+          [style.border-color]="block.color"
+          draggable="true"
+          (dragstart)="onDragStart($event, block)"
+        >
+          <span class="block-icon">{{ getIcon(block.type) }}</span>
+          <div class="block-info">
+            <span class="block-name">{{ block.name }}</span>
+            <span class="block-desc">{{ block.description }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Groupe: Logique -->
+    <div class="category">
+      <h3 class="category-title">Logique</h3>
+      <div class="blocks-list">
+        <div
+          *ngFor="let block of getBlocksByType('condition')"
+          class="block-item"
+          [style.background-color]="block.color + '20'"
+          [style.border-color]="block.color"
+          draggable="true"
+          (dragstart)="onDragStart($event, block)"
+        >
+          <span class="block-icon">{{ getIcon(block.type) }}</span>
+          <div class="block-info">
+            <span class="block-name">{{ block.name }}</span>
+            <span class="block-desc">{{ block.description }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Groupe: Transformation & Loops -->
+    <div class="category">
+      <h3 class="category-title">Transformation</h3>
+      <div class="blocks-list">
+        <div
+          *ngFor="let block of (searchTerm ? filteredBlocks : BLOCK_DEFINITIONS) | slice:3"
+          class="block-item"
+          [style.background-color]="block.color + '20'"
+          [style.border-color]="block.color"
+          draggable="true"
+          (dragstart)="onDragStart($event, block)"
+        >
+          <span class="block-icon">{{ getIcon(block.type) }}</span>
+          <div class="block-info">
+            <span class="block-name">{{ block.name }}</span>
+            <span class="block-desc">{{ block.description }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>

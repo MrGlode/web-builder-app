@@ -1,113 +1,103 @@
 // src/app/features/visual-builder/services/clipboard.service.ts
 
-import { Injectable, signal, computed, effect, inject } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import { BuilderComponent } from '../models/component.model';
-import { ComponentFactoryService } from './component-factory.service';
 
 /**
  * Service gérant le copier/coller de composants
+ * Compatible avec ComponentFactoryService existant
  */
 @Injectable({
   providedIn: 'root'
 })
 export class ClipboardService {
   
-  private componentFactory = inject(ComponentFactoryService);
-  
   // ===== STATE =====
   
   /** Composants dans le clipboard */
   private clipboard = signal<BuilderComponent[]>([]);
   
-  /** Indique si on coupe au lieu de copier */
+  /** Type d'opération (copy ou cut) */
   private isCutOperation = signal<boolean>(false);
   
-  /** IDs des composants coupés (pour les supprimer après le paste) */
+  /** IDs des composants coupés */
   private cutComponentIds = signal<string[]>([]);
   
   // ===== COMPUTED =====
   
-  /** Indique si le clipboard contient des éléments */
+  /** Clipboard a du contenu */
   hasClipboard = computed(() => this.clipboard().length > 0);
   
-  /** Nombre d'éléments dans le clipboard */
+  /** Nombre d'éléments */
   clipboardCount = computed(() => this.clipboard().length);
   
-  /** Indique si c'est une opération cut */
+  /** Est une opération cut */
   isCut = computed(() => this.isCutOperation());
   
-  /** IDs des composants coupés */
+  /** IDs coupés */
   cutIds = computed(() => this.cutComponentIds());
-  
-  // ===== EFFECTS =====
-  
-  constructor() {
-    // Écoute les raccourcis clavier globaux
-    this.setupKeyboardShortcuts();
-  }
   
   // ===== PUBLIC METHODS =====
   
   /**
-   * Copie un ou plusieurs composants dans le clipboard
+   * Copie un ou plusieurs composants
    */
   copy(components: BuilderComponent | BuilderComponent[]): void {
     const componentsArray = Array.isArray(components) ? components : [components];
     
-    // Clone profond des composants
-    const clonedComponents = componentsArray.map(c => this.deepClone(c));
+    // Clone profond
+    const cloned = componentsArray.map(c => this.deepClone(c));
     
-    this.clipboard.set(clonedComponents);
+    this.clipboard.set(cloned);
     this.isCutOperation.set(false);
     this.cutComponentIds.set([]);
     
-    console.log(`📋 Copied ${clonedComponents.length} component(s)`);
+    console.log(`📋 Clipboard: Copied ${cloned.length} component(s)`);
   }
   
   /**
-   * Coupe un ou plusieurs composants (copie + marquage pour suppression)
+   * Coupe un ou plusieurs composants
    */
   cut(components: BuilderComponent | BuilderComponent[]): void {
     const componentsArray = Array.isArray(components) ? components : [components];
     
-    // Clone profond des composants
-    const clonedComponents = componentsArray.map(c => this.deepClone(c));
+    // Clone profond
+    const cloned = componentsArray.map(c => this.deepClone(c));
     
-    this.clipboard.set(clonedComponents);
+    this.clipboard.set(cloned);
     this.isCutOperation.set(true);
     this.cutComponentIds.set(componentsArray.map(c => c.id));
     
-    console.log(`✂️ Cut ${clonedComponents.length} component(s)`);
+    console.log(`✂️ Clipboard: Cut ${cloned.length} component(s)`);
   }
   
   /**
    * Colle les composants du clipboard
-   * @returns Les nouveaux composants créés avec de nouveaux IDs
+   * Génère de nouveaux IDs
    */
   paste(): BuilderComponent[] {
     const components = this.clipboard();
     
     if (components.length === 0) {
-      console.warn('⚠️ Clipboard is empty');
+      console.warn('⚠️ Clipboard: Empty');
       return [];
     }
     
-    // Crée de nouveaux composants avec de nouveaux IDs
-    const pastedComponents = components.map(c => this.createWithNewIds(c));
+    // Créer avec nouveaux IDs
+    const pasted = components.map(c => this.createWithNewIds(c));
     
-    console.log(`📌 Pasted ${pastedComponents.length} component(s)`);
+    console.log(`📌 Clipboard: Pasted ${pasted.length} component(s)`);
     
-    // Si c'était un cut, on garde le clipboard pour permettre plusieurs pastes
-    // mais on reset le flag cut
+    // Reset le flag cut après paste
     if (this.isCutOperation()) {
       this.isCutOperation.set(false);
     }
     
-    return pastedComponents;
+    return pasted;
   }
   
   /**
-   * Duplique un composant (copie + paste immédiat)
+   * Duplique un composant (copy + paste immédiat)
    */
   duplicate(component: BuilderComponent): BuilderComponent {
     const cloned = this.deepClone(component);
@@ -121,11 +111,11 @@ export class ClipboardService {
     this.clipboard.set([]);
     this.isCutOperation.set(false);
     this.cutComponentIds.set([]);
-    console.log('🗑️ Clipboard cleared');
+    console.log('🗑️ Clipboard: Cleared');
   }
   
   /**
-   * Obtient le contenu du clipboard (lecture seule)
+   * Obtient le contenu (read-only)
    */
   getClipboardContent(): ReadonlyArray<BuilderComponent> {
     return this.clipboard();
@@ -134,27 +124,32 @@ export class ClipboardService {
   // ===== PRIVATE METHODS =====
   
   /**
-   * Clone profond un composant
+   * Clone profond
    */
   private deepClone(component: BuilderComponent): BuilderComponent {
     return JSON.parse(JSON.stringify(component));
   }
   
   /**
-   * Crée une copie du composant avec de nouveaux IDs
+   * Crée une copie avec nouveaux IDs
    */
   private createWithNewIds(component: BuilderComponent): BuilderComponent {
-    // Génère un nouveau ID
-    const newId = this.componentFactory.generateId();
+    // Génère un ID unique
+    const newId = this.generateId(component.type);
     
     // Clone le composant
     const newComponent: BuilderComponent = {
       ...component,
       id: newId,
-      properties: { ...component.properties }
+      // Garder le même order initialement
+      order: component.order,
+      // Reset les états
+      isSelected: false,
+      isLocked: false,
+      isHidden: false
     };
     
-    // Si le composant a des enfants, génère aussi de nouveaux IDs pour eux
+    // Traiter les enfants récursivement
     if (component.children && component.children.length > 0) {
       newComponent.children = component.children.map(child => 
         this.createWithNewIds(child)
@@ -165,17 +160,11 @@ export class ClipboardService {
   }
   
   /**
-   * Configure les raccourcis clavier globaux
+   * Génère un ID unique
    */
-  private setupKeyboardShortcuts(): void {
-    if (typeof window !== 'undefined') {
-      // Note: Dans une vraie app, ces listeners seraient dans le composant
-      // Pour éviter les conflits, on les documente ici mais on ne les active pas
-      console.log('📌 Clipboard shortcuts available:');
-      console.log('  - Ctrl+C : Copy selected component(s)');
-      console.log('  - Ctrl+X : Cut selected component(s)');
-      console.log('  - Ctrl+V : Paste component(s)');
-      console.log('  - Ctrl+D : Duplicate selected component');
-    }
+  private generateId(type: string): string {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 9);
+    return `${type}_${timestamp}_${random}`;
   }
 }

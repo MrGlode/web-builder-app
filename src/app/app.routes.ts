@@ -39,13 +39,13 @@ export const routes: Routes = [
           .then(m => m.VISUAL_BUILDER_ROUTES),
         title: 'Visual Builder'
       },
-      /** 
       {
         path: 'api-orchestrator',
         loadChildren: () => import('./features/api-orchestrator/api-orchestrator.routes')
           .then(m => m.API_ORCHESTRATOR_ROUTES),
         title: 'API Orchestrator'
       },
+      /**
       {
         path: 'templates',
         loadChildren: () => import('./features/template-manager/template-manager.routes')

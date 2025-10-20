@@ -9,7 +9,8 @@ import { BuilderComponent } from '../models/component.model';
 export type SelectionMode = 'single' | 'multi' | 'range';
 
 /**
- * Service gérant la sélection multiple de composants
+ * Service gérant la multi-sélection de composants
+ * Compatible avec VisualBuilderService
  */
 @Injectable({
   providedIn: 'root'
@@ -18,45 +19,42 @@ export class MultiSelectionService {
   
   // ===== STATE =====
   
-  /** IDs des composants sélectionnés */
+  /** IDs sélectionnés */
   private selectedIds = signal<Set<string>>(new Set());
   
-  /** ID du dernier composant sélectionné (pour range selection) */
+  /** Dernier sélectionné (pour range) */
   private lastSelectedId = signal<string | null>(null);
   
-  /** ID du composant pivot pour la sélection (premier sélectionné) */
+  /** Pivot (premier de la range) */
   private pivotId = signal<string | null>(null);
   
-  /** Mode de sélection actuel */
+  /** Mode actuel */
   private selectionMode = signal<SelectionMode>('single');
   
   // ===== COMPUTED =====
   
-  /** Liste des IDs sélectionnés */
+  /** Liste des IDs */
   selectedComponentIds = computed(() => Array.from(this.selectedIds()));
   
-  /** Nombre de composants sélectionnés */
+  /** Nombre de sélectionnés */
   selectionCount = computed(() => this.selectedIds().size);
   
-  /** Indique si plusieurs composants sont sélectionnés */
+  /** Multi-sélection active */
   hasMultipleSelection = computed(() => this.selectedIds().size > 1);
   
-  /** Indique si au moins un composant est sélectionné */
+  /** Au moins un sélectionné */
   hasSelection = computed(() => this.selectedIds().size > 0);
   
-  /** Obtient le mode de sélection */
+  /** Mode actuel */
   currentMode = computed(() => this.selectionMode());
   
-  /** Obtient l'ID du pivot */
+  /** ID pivot */
   pivotComponentId = computed(() => this.pivotId());
   
   // ===== PUBLIC METHODS =====
   
   /**
    * Sélectionne un composant
-   * @param id ID du composant
-   * @param mode Mode de sélection (single, multi, range)
-   * @param allComponents Liste de tous les composants (pour range selection)
    */
   select(
     id: string, 
@@ -80,6 +78,8 @@ export class MultiSelectionService {
         }
         break;
     }
+    
+    console.log(`🎯 Selection: ${mode} - ${this.selectionCount()} selected`);
   }
   
   /**
@@ -95,6 +95,7 @@ export class MultiSelectionService {
     }
     
     if (this.pivotId() === id) {
+      // Si le pivot est désélectionné, utiliser le premier élément restant
       this.pivotId.set(newSet.size > 0 ? Array.from(newSet)[0] : null);
     }
   }
@@ -119,62 +120,18 @@ export class MultiSelectionService {
   /**
    * Sélectionne tous les composants
    */
-  selectAll(components: BuilderComponent[]): void {
-    const allIds = this.getAllComponentIds(components);
-    this.selectedIds.set(new Set(allIds));
+  selectAll(componentIds: string[]): void {
+    this.selectedIds.set(new Set(componentIds));
     this.selectionMode.set('multi');
     
-    if (allIds.length > 0) {
-      this.pivotId.set(allIds[0]);
-      this.lastSelectedId.set(allIds[allIds.length - 1]);
+    if (componentIds.length > 0) {
+      this.pivotId.set(componentIds[0]);
+      this.lastSelectedId.set(componentIds[componentIds.length - 1]);
     }
   }
   
   /**
-   * Inverse la sélection
-   */
-  invertSelection(allComponents: BuilderComponent[], currentSelection: string[]): void {
-    const allIds = this.getAllComponentIds(allComponents);
-    const currentSet = new Set(currentSelection);
-    const invertedIds = allIds.filter(id => !currentSet.has(id));
-    
-    this.selectedIds.set(new Set(invertedIds));
-    this.selectionMode.set('multi');
-    
-    if (invertedIds.length > 0) {
-      this.pivotId.set(invertedIds[0]);
-      this.lastSelectedId.set(invertedIds[invertedIds.length - 1]);
-    }
-  }
-  
-  /**
-   * Sélectionne les composants dans une zone rectangulaire
-   */
-  selectInRect(
-    rect: { x: number; y: number; width: number; height: number },
-    components: BuilderComponent[],
-    componentPositions: Map<string, { x: number; y: number; width: number; height: number }>
-  ): void {
-    const idsInRect: string[] = [];
-    
-    components.forEach(comp => {
-      const pos = componentPositions.get(comp.id);
-      if (pos && this.isInRect(pos, rect)) {
-        idsInRect.push(comp.id);
-      }
-    });
-    
-    this.selectedIds.set(new Set(idsInRect));
-    this.selectionMode.set('multi');
-    
-    if (idsInRect.length > 0) {
-      this.pivotId.set(idsInRect[0]);
-      this.lastSelectedId.set(idsInRect[idsInRect.length - 1]);
-    }
-  }
-  
-  /**
-   * Obtient les composants sélectionnés
+   * Obtient les composants sélectionnés depuis une liste
    */
   getSelectedComponents(allComponents: BuilderComponent[]): BuilderComponent[] {
     const selectedSet = this.selectedIds();
@@ -193,92 +150,62 @@ export class MultiSelectionService {
   }
   
   /**
-   * Sélection multiple (toggle)
+   * Toggle la sélection d'un composant (Ctrl+Click)
    */
   private toggleMulti(id: string): void {
     const newSet = new Set(this.selectedIds());
     
     if (newSet.has(id)) {
+      // Désélectionner
       newSet.delete(id);
-      if (this.lastSelectedId() === id) {
-        this.lastSelectedId.set(newSet.size > 0 ? Array.from(newSet)[0] : null);
-      }
-      if (this.pivotId() === id) {
-        this.pivotId.set(newSet.size > 0 ? Array.from(newSet)[0] : null);
+      
+      if (this.pivotId() === id && newSet.size > 0) {
+        this.pivotId.set(Array.from(newSet)[0]);
       }
     } else {
+      // Sélectionner
       newSet.add(id);
-      this.lastSelectedId.set(id);
       
-      // Si c'est le premier élément sélectionné, il devient le pivot
       if (newSet.size === 1) {
         this.pivotId.set(id);
       }
     }
     
     this.selectedIds.set(newSet);
-  }
-  
-  /**
-   * Sélection en range (du pivot au composant cliqué)
-   */
-  private selectRange(id: string, allComponents: BuilderComponent[]): void {
-    const pivot = this.pivotId();
-    
-    if (!pivot) {
-      // Pas de pivot, sélection simple
-      this.selectSingle(id);
-      return;
-    }
-    
-    const allIds = this.getAllComponentIds(allComponents);
-    const pivotIndex = allIds.indexOf(pivot);
-    const targetIndex = allIds.indexOf(id);
-    
-    if (pivotIndex === -1 || targetIndex === -1) {
-      return;
-    }
-    
-    // Sélectionne tous les éléments entre pivot et target
-    const start = Math.min(pivotIndex, targetIndex);
-    const end = Math.max(pivotIndex, targetIndex);
-    const rangeIds = allIds.slice(start, end + 1);
-    
-    this.selectedIds.set(new Set(rangeIds));
     this.lastSelectedId.set(id);
   }
   
   /**
-   * Récupère tous les IDs de composants de manière récursive
+   * Sélection en plage (Shift+Click)
    */
-  private getAllComponentIds(components: BuilderComponent[]): string[] {
-    const ids: string[] = [];
+  private selectRange(id: string, allComponents: BuilderComponent[]): void {
+    const lastId = this.lastSelectedId() || this.pivotId();
     
-    const traverse = (comps: BuilderComponent[]) => {
-      comps.forEach(comp => {
-        ids.push(comp.id);
-        if (comp.children && comp.children.length > 0) {
-          traverse(comp.children);
-        }
-      });
-    };
+    if (!lastId) {
+      // Pas de sélection précédente, faire une sélection simple
+      this.selectSingle(id);
+      return;
+    }
     
-    traverse(components);
-    return ids;
-  }
-  
-  /**
-   * Vérifie si une position est dans un rectangle
-   */
-  private isInRect(
-    pos: { x: number; y: number; width: number; height: number },
-    rect: { x: number; y: number; width: number; height: number }
-  ): boolean {
-    return !(
-      pos.x + pos.width < rect.x ||
-      pos.x > rect.x + rect.width ||
-      pos.y + pos.height < rect.y ||
-      pos.y > rect.y + rect.height
-    );
+    // Trouver les indices
+    const lastIndex = allComponents.findIndex(c => c.id === lastId);
+    const currentIndex = allComponents.findIndex(c => c.id === id);
+    
+    if (lastIndex === -1 || currentIndex === -1) {
+      return;
+    }
+    
+    // Déterminer la plage
+    const start = Math.min(lastIndex, currentIndex);
+    const end = Math.max(lastIndex, currentIndex);
+    
+    // Sélectionner tous les composants dans la plage
+    const newSet = new Set(this.selectedIds());
+    for (let i = start; i <= end; i++) {
+      newSet.add(allComponents[i].id);
+    }
+    
+    this.selectedIds.set(newSet);
+    this.lastSelectedId.set(id);
   }
 }

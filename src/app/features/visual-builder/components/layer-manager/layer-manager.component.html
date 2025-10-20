@@ -1,0 +1,179 @@
+<!-- src/app/features/visual-builder/components/layer-manager/layer-manager.component.html -->
+
+<div class="layer-manager">
+  
+  <!-- ===== HEADER ===== -->
+  <div class="manager-header">
+    <h3 class="header-title">
+      <span class="title-icon">🎨</span>
+      Calques
+    </h3>
+    
+    <button 
+      class="btn-create"
+      (click)="createNewLayer()"
+      title="Créer un nouveau calque">
+      <span>+ Nouveau calque</span>
+    </button>
+  </div>
+  
+  <!-- ===== LAYERS LIST ===== -->
+  <div class="layers-list">
+    
+    <!-- État vide -->
+    @if (layers().length === 0) {
+      <div class="empty-state">
+        <p class="empty-icon">📄</p>
+        <p class="empty-text">Aucun calque</p>
+        <button 
+          class="btn-create-first"
+          (click)="createNewLayer()">
+          Créer le premier calque
+        </button>
+      </div>
+    }
+    
+    <!-- Liste des calques -->
+    @for (layer of layers(); track layer.id) {
+      <div 
+        [class]="getLayerClass(layer)"
+        [style.border-left-color]="layer.color"
+        (click)="selectLayer(layer.id)"
+        (dblclick)="onLayerDoubleClick(layer, $event)"
+        draggable="true"
+        (dragstart)="onDragStart(layer.id, $event)"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop(layer.id, $event)"
+        (dragend)="onDragEnd()">
+        
+        <!-- Drag Handle -->
+        <div class="layer-drag-handle">
+          <span>⋮⋮</span>
+        </div>
+        
+        <!-- Layer Info -->
+        <div class="layer-info">
+          
+          <!-- Icône -->
+          <span class="layer-icon">{{ getLayerIcon(layer) }}</span>
+          
+          <!-- Nom (mode normal) -->
+          @if (!isEditing(layer.id)) {
+            <span class="layer-name">{{ layer.name }}</span>
+          }
+          
+          <!-- Nom (mode édition) -->
+          @if (isEditing(layer.id)) {
+            <input 
+              type="text"
+              class="layer-name-input"
+              [(ngModel)]="editingName"
+              (keydown.enter)="saveEditing()"
+              (keydown.escape)="cancelEditing()"
+              (blur)="saveEditing()"
+              (click)="$event.stopPropagation()"
+              autofocus>
+          }
+          
+          <!-- Compteur de composants -->
+          @if (viewConfig().showComponentCount) {
+            <span class="component-count">
+              {{ getComponentCount(layer.id) }}
+            </span>
+          }
+        </div>
+        
+        <!-- Opacité -->
+        <div class="layer-opacity">
+          <input 
+            type="range"
+            min="0"
+            max="100"
+            [value]="layer.opacity"
+            (input)="changeOpacity(layer.id, +$any($event.target).value)"
+            (click)="$event.stopPropagation()"
+            title="Opacité: {{ layer.opacity }}%">
+          <span class="opacity-value">{{ layer.opacity }}%</span>
+        </div>
+        
+        <!-- Actions -->
+        <div class="layer-actions">
+          
+          <!-- Visibilité -->
+          <button 
+            class="btn-action"
+            [class.active]="layer.isVisible"
+            (click)="toggleVisibility(layer.id, $event)"
+            title="Visibilité">
+            {{ layer.isVisible ? '👁️' : '👁️‍🗨️' }}
+          </button>
+          
+          <!-- Verrouillage -->
+          <button 
+            class="btn-action"
+            [class.active]="layer.isLocked"
+            (click)="toggleLock(layer.id, $event)"
+            title="Verrouiller">
+            {{ layer.isLocked ? '🔒' : '🔓' }}
+          </button>
+          
+          <!-- Menu actions -->
+          <div class="action-menu">
+            <button 
+              class="btn-action btn-menu"
+              title="Plus d'actions">
+              ⋮
+            </button>
+            
+            <div class="menu-dropdown">
+              <button 
+                class="menu-item"
+                (click)="duplicateLayer(layer.id, $event)">
+                <span class="menu-icon">📋</span>
+                <span>Dupliquer</span>
+              </button>
+              
+              <button 
+                class="menu-item"
+                (click)="startEditing(layer.id, layer.name); $event.stopPropagation()">
+                <span class="menu-icon">✏️</span>
+                <span>Renommer</span>
+              </button>
+              
+              <div class="menu-divider"></div>
+              
+              <button 
+                class="menu-item danger"
+                (click)="deleteLayer(layer.id, $event)">
+                <span class="menu-icon">🗑️</span>
+                <span>Supprimer</span>
+              </button>
+            </div>
+          </div>
+          
+        </div>
+        
+      </div>
+    }
+    
+  </div>
+  
+  <!-- ===== FOOTER ===== -->
+  <div class="manager-footer">
+    <div class="footer-stats">
+      <span class="stat-item">
+        📄 {{ layers().length }} calque{{ layers().length > 1 ? 's' : '' }}
+      </span>
+    </div>
+    
+    <div class="footer-actions">
+      <button 
+        class="btn-footer"
+        (click)="selectLayer(null)"
+        title="Afficher tous les calques">
+        Tous
+      </button>
+    </div>
+  </div>
+  
+</div>

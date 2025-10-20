@@ -1,4 +1,4 @@
-<!-- src/app/features/visual-builder/components/visual-builder/visual-builder.component.html -->
+<!-- src/app/features/visual-builder/visual-builder.component.html -->
 
 <div 
   class="visual-builder"
@@ -27,6 +27,8 @@
         [components]="components()"
         [selectedComponentId]="selectedComponent()?.id || null"
         (componentSelected)="onComponentSelected($event)"
+        (componentsSelected)="onComponentsSelected($event)"
+        (componentsDeleted)="onComponentsDeleted($event)"
         (componentDropped)="onComponentDropped($event)"
       ></app-builder-canvas>
     </main>
@@ -59,23 +61,117 @@
         
         <!-- Layers Panel -->
         @if (activeRightPanel() === 'layers') {
-          <div class="layers-placeholder">
-            <div style="padding: 40px; text-align: center; color: #999;">
-              <p style="font-size: 48px; margin-bottom: 16px;">📋</p>
-              <p>Layers Panel</p>
-              <p style="font-size: 12px; margin-top: 8px;">À implémenter</p>
-            </div>
-          </div>
+          <app-layers-panel></app-layers-panel>
         }
         
         <!-- Properties Panel -->
         @if (activeRightPanel() === 'properties') {
-          <app-properties-panel
-            [selectedComponent]="selectedComponent()"
-            [visible]="true"
-            (propertyChanged)="onPropertyChanged($event)"
-            (closed)="onPropertiesPanelClosed()"
-          ></app-properties-panel>
+          
+          <!-- 🆕 Cas sélection multiple -->
+          @if (hasMultipleSelection()) {
+            <div class="multi-selection-properties">
+              <div class="properties-header">
+                <h3>Sélection multiple</h3>
+                <span class="selection-count">
+                  {{ selectedComponents().length }} composants
+                </span>
+              </div>
+              
+              <div class="properties-content">
+                <div class="info-box">
+                  <p>💡 Les modifications seront appliquées à tous les composants sélectionnés</p>
+                </div>
+                
+                <!-- Liste des composants sélectionnés -->
+                <div class="selected-list">
+                  <h4>Composants sélectionnés :</h4>
+                  <ul>
+                    @for (comp of selectedComponents(); track comp.id) {
+                      <li>
+                        <span class="comp-icon">
+                          {{ comp.type === 'button' ? '🔘' : 
+                             comp.type === 'heading' ? '🔤' :
+                             comp.type === 'image' ? '🖼️' :
+                             comp.type === 'input' ? '✏️' : '📦' }}
+                        </span>
+                        <span class="comp-name">{{ comp.displayName }}</span>
+                        <span class="comp-type">{{ comp.type }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+                
+                <!-- Propriétés communes -->
+                <div class="common-properties">
+                  <h4>Propriétés communes</h4>
+                  <p class="coming-soon">🚧 Édition groupée disponible prochainement</p>
+                  
+                  <!-- Exemple de propriétés communes (désactivées pour l'instant) -->
+                  <div class="property-group disabled">
+                    <label>Opacité</label>
+                    <input type="range" min="0" max="100" value="100" disabled>
+                  </div>
+                  
+                  <div class="property-group disabled">
+                    <label>Marge</label>
+                    <input type="text" placeholder="0px" disabled>
+                  </div>
+                  
+                  <div class="property-group disabled">
+                    <label>Padding</label>
+                    <input type="text" placeholder="0px" disabled>
+                  </div>
+                </div>
+                
+                <!-- Actions groupées -->
+                <div class="group-actions">
+                  <h4>Actions groupées</h4>
+                  <div class="actions-grid">
+                    <button 
+                      class="action-btn"
+                      (click)="onComponentsDuplicated(selectedComponentIds())"
+                      title="Dupliquer la sélection">
+                      📋 Dupliquer
+                    </button>
+                    
+                    <button 
+                      class="action-btn"
+                      (click)="onComponentsGrouped(selectedComponentIds())"
+                      title="Grouper les composants">
+                      📦 Grouper
+                    </button>
+                    
+                    <button 
+                      class="action-btn"
+                      (click)="onComponentsLockToggled({ 
+                        ids: selectedComponentIds(), 
+                        locked: true 
+                      })"
+                      title="Verrouiller">
+                      🔒 Verrouiller
+                    </button>
+                    
+                    <button 
+                      class="action-btn danger"
+                      (click)="onComponentsDeleted(selectedComponentIds())"
+                      title="Supprimer la sélection">
+                      🗑️ Supprimer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+          
+          <!-- 🔄 Cas sélection simple (existant) -->
+          @else {
+            <app-properties-panel
+              [selectedComponent]="selectedComponent()"
+              [visible]="true"
+              (propertyChanged)="onPropertyChanged($event)"
+              (closed)="onPropertiesPanelClosed()"
+            ></app-properties-panel>
+          }
         }
         
       </div>
@@ -90,12 +186,47 @@
       <span class="status-item">
         📦 {{ componentCount() }} composant{{ componentCount() > 1 ? 's' : '' }}
       </span>
-      @if (selectedComponent()) {
+      
+      <!-- 🆕 Affichage de la sélection -->
+      @if (hasMultipleSelection()) {
+        <span class="status-item highlight">
+          📊 {{ selectedComponents().length }} sélectionné(s)
+        </span>
+      } @else if (selectedComponent()) {
         <span class="status-item">
           📌 {{ selectedComponent()?.displayName }}
         </span>
       }
     </div>
+    
+    <!-- 🆕 Actions rapides pour sélection multiple -->
+    @if (hasMultipleSelection()) {
+      <div class="quick-actions">
+        <button 
+          class="quick-btn"
+          (click)="onComponentsDuplicated(selectedComponentIds())"
+          title="Dupliquer la sélection (Ctrl+D)">
+          📋 Dupliquer
+        </button>
+        
+        <button 
+          class="quick-btn"
+          (click)="onComponentsGrouped(selectedComponentIds())"
+          title="Grouper (Ctrl+G)">
+          📦 Grouper
+        </button>
+        
+        <button 
+          class="quick-btn"
+          (click)="onComponentsLockToggled({ 
+            ids: selectedComponentIds(), 
+            locked: true 
+          })"
+          title="Verrouiller">
+          🔒 Verrouiller
+        </button>
+      </div>
+    }
   </footer>
   
 </div>
