@@ -1,6 +1,6 @@
 // src/app/features/api-orchestrator/components/designer-canvas/designer-canvas.component.ts
 
-import { Component, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
+import { Component, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OrchestratorGraphService } from '../../services/orchestrator-graph.service';
 import { getBlockDefinition } from '../../models/block-definitions';
@@ -47,24 +47,20 @@ export class DesignerCanvasComponent implements AfterViewInit {
     console.log('Current blocks:', this.blocks());
   }
 
-  @HostListener('dragover', ['$event'])
   onHostDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    console.log('🔵 Dragover detected on MAIN');
-    
+
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'copy';
-      console.log('✅ dropEffect set to copy');
     }
   }
 
-  @HostListener('drop', ['$event'])
   onHostDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    
-    console.log('🟢 DROP event detected on MAIN!');
+
+    console.log('🟢 DROP event detected!');
 
     if (!event.dataTransfer) {
       console.error('❌ No dataTransfer');
@@ -73,7 +69,7 @@ export class DesignerCanvasComponent implements AfterViewInit {
 
     const data = event.dataTransfer.getData('application/json');
     console.log('📦 Data received:', data);
-    
+
     if (!data) {
       console.log('❌ Pas de données dans le drag');
       return;
@@ -82,10 +78,11 @@ export class DesignerCanvasComponent implements AfterViewInit {
     try {
       const block = JSON.parse(data);
       console.log('✅ Block parsed:', block);
-      
-      const rect = (event.target as HTMLElement).getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
+
+      // Obtenir les coordonnées par rapport au canvas
+      const canvasRect = this.canvasRef.nativeElement.getBoundingClientRect();
+      const x = event.clientX - canvasRect.left;
+      const y = event.clientY - canvasRect.top;
 
       console.log('📍 Position:', { x, y });
       console.log('🎯 Block drop emission:', { definitionId: block.id, name: block.name });

@@ -1,13 +1,10 @@
 <!-- src/app/features/api-orchestrator/components/designer-canvas/designer-canvas.component.html -->
 
-<main class="designer-canvas">
-  <!-- Overlay transparent pour capturer les drag/drop -->
-  <div 
-    class="drop-overlay"
-    (dragover)="onHostDragOver($event)"
-    (drop)="onHostDrop($event)"
-  ></div>
-
+<main
+  class="designer-canvas"
+  (dragover)="onHostDragOver($event)"
+  (drop)="onHostDrop($event)"
+>
   <svg
     #canvas
     class="canvas-svg"
