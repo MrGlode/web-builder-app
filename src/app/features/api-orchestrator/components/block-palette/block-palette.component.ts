@@ -50,16 +50,26 @@ export class BlockPaletteComponent {
 
   onDragStart(event: DragEvent, block: BlockDefinition): void {
     console.log('🟡 Dragstart on block:', block.name);
-    
+
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'copy';
-      const dataToSend = JSON.stringify(block);
-      event.dataTransfer.setData('application/json', dataToSend);
-      console.log('✅ Data set in dataTransfer:', dataToSend);
+      // Stocker les données du bloc comme dans le visual builder
+      event.dataTransfer.setData('blockDefinitionId', block.id);
+      event.dataTransfer.setData('blockName', block.name);
+      console.log('✅ Data set in dataTransfer:', { id: block.id, name: block.name });
+
+      // Ajouter une classe visuelle
+      const target = event.target as HTMLElement;
+      target.classList.add('dragging');
     } else {
       console.error('❌ No dataTransfer available');
     }
-    
+
     this.blockSelected.emit(block);
+  }
+
+  onDragEnd(event: DragEvent): void {
+    const target = event.target as HTMLElement;
+    target.classList.remove('dragging');
   }
 }

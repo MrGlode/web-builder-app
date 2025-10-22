@@ -26,6 +26,7 @@
           [style.border-color]="block.color"
           draggable="true"
           (dragstart)="onDragStart($event, block)"
+          (dragend)="onDragEnd($event)"
         >
           <span class="block-icon">{{ getIcon(block.type) }}</span>
           <div class="block-info">
@@ -47,6 +48,7 @@
           [style.border-color]="block.color"
           draggable="true"
           (dragstart)="onDragStart($event, block)"
+          (dragend)="onDragEnd($event)"
         >
           <span class="block-icon">{{ getIcon(block.type) }}</span>
           <div class="block-info">
@@ -68,6 +70,7 @@
           [style.border-color]="block.color"
           draggable="true"
           (dragstart)="onDragStart($event, block)"
+          (dragend)="onDragEnd($event)"
         >
           <span class="block-icon">{{ getIcon(block.type) }}</span>
           <div class="block-info">
@@ -89,6 +92,7 @@
           [style.border-color]="block.color"
           draggable="true"
           (dragstart)="onDragStart($event, block)"
+          (dragend)="onDragEnd($event)"
         >
           <span class="block-icon">{{ getIcon(block.type) }}</span>
           <div class="block-info">
