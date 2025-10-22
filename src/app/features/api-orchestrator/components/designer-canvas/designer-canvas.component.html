@@ -2,7 +2,9 @@
 
 <main
   class="designer-canvas"
+  [class.dragging]="isDragging"
   (dragover)="onHostDragOver($event)"
+  (dragleave)="onHostDragLeave($event)"
   (drop)="onHostDrop($event)"
 >
   <svg

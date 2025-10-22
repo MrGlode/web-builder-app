@@ -30,6 +30,7 @@ export class DesignerCanvasComponent implements AfterViewInit {
   dragLine: { from: Point; to: Point } | null = null;
   dragStartPos: Point | null = null;
   draggedBlockId: string | null = null;
+  isDragging: boolean = false;
 
   constructor(private graphService: OrchestratorGraphService) {}
 
@@ -54,6 +55,8 @@ export class DesignerCanvasComponent implements AfterViewInit {
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'copy';
     }
+
+    this.isDragging = true;
   }
 
   onHostDrop(event: DragEvent): void {
@@ -67,33 +70,41 @@ export class DesignerCanvasComponent implements AfterViewInit {
       return;
     }
 
-    const data = event.dataTransfer.getData('application/json');
-    console.log('📦 Data received:', data);
+    // Récupérer les données du bloc comme dans le visual builder
+    const blockDefinitionId = event.dataTransfer.getData('blockDefinitionId');
+    const blockName = event.dataTransfer.getData('blockName');
 
-    if (!data) {
+    console.log('📦 Data received:', { blockDefinitionId, blockName });
+
+    if (!blockDefinitionId) {
       console.log('❌ Pas de données dans le drag');
       return;
     }
 
-    try {
-      const block = JSON.parse(data);
-      console.log('✅ Block parsed:', block);
+    // Obtenir les coordonnées par rapport au canvas
+    const canvasRect = this.canvasRef.nativeElement.getBoundingClientRect();
+    const x = event.clientX - canvasRect.left;
+    const y = event.clientY - canvasRect.top;
 
-      // Obtenir les coordonnées par rapport au canvas
-      const canvasRect = this.canvasRef.nativeElement.getBoundingClientRect();
-      const x = event.clientX - canvasRect.left;
-      const y = event.clientY - canvasRect.top;
+    console.log('📍 Position:', { x, y });
+    console.log('🎯 Block drop emission:', { definitionId: blockDefinitionId, name: blockName });
 
-      console.log('📍 Position:', { x, y });
-      console.log('🎯 Block drop emission:', { definitionId: block.id, name: block.name });
+    this.blockDropped.emit({
+      definitionId: blockDefinitionId,
+      name: blockName,
+      position: { x: Math.max(0, x), y: Math.max(0, y) }
+    });
 
-      this.blockDropped.emit({
-        definitionId: block.id,
-        name: block.name,
-        position: { x: Math.max(0, x), y: Math.max(0, y) }
-      });
-    } catch (error) {
-      console.error('❌ Erreur lors du drop:', error);
+    this.isDragging = false;
+  }
+
+  onHostDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const target = event.target as HTMLElement;
+    if (target.classList.contains('designer-canvas')) {
+      this.isDragging = false;
     }
   }
 
