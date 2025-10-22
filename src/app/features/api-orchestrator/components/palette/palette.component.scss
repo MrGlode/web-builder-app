@@ -1,0 +1,69 @@
+// src/app/features/api-orchestrator/components/palette/palette.component.scss
+
+.palette {
+  width: 260px;
+  background: white;
+  border-right: 1px solid #e0e0e0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+
+.palette-header {
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+.blocks-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.block-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 2px solid;
+  border-radius: 6px;
+  cursor: grab;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.block-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.block-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.block-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+}
+
+.block-desc {
+  font-size: 11px;
+  color: #999;
+}

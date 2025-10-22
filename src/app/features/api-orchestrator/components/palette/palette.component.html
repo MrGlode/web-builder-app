@@ -1,0 +1,24 @@
+<!-- src/app/features/api-orchestrator/components/palette/palette.component.html -->
+
+<aside class="palette">
+  <div class="palette-header">
+    <h2>Blocs</h2>
+  </div>
+
+  <div class="blocks-grid">
+    <div
+      *ngFor="let block of blocks"
+      class="block-item"
+      [style.background-color]="block.color + '20'"
+      [style.border-color]="block.color"
+      draggable="true"
+      (dragstart)="onDragStart($event, block.id)"
+    >
+      <span class="block-icon">{{ block.icon }}</span>
+      <div class="block-info">
+        <span class="block-name">{{ block.name }}</span>
+        <span class="block-desc">{{ block.description }}</span>
+      </div>
+    </div>
+  </div>
+</aside>

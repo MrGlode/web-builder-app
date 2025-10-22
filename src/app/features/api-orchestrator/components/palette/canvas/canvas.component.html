@@ -1,0 +1,59 @@
+<!-- src/app/features/api-orchestrator/components/canvas/canvas.component.html -->
+
+<main 
+  class="canvas"
+  (dragover)="onCanvasDragOver($event)"
+  (drop)="onCanvasDrop($event)"
+  (mousemove)="onMouseMove($event)"
+  (mouseup)="onMouseUp()"
+  (mouseleave)="onMouseUp()"
+>
+  <!-- Grille de fond -->
+  <div class="canvas-grid"></div>
+
+  <!-- État vide -->
+  <div class="canvas-empty" *ngIf="orchestration().blocks.length === 0">
+    <span class="empty-icon">🎯</span>
+    <h3>Canvas vide</h3>
+    <p>Drag un bloc depuis la palette pour commencer</p>
+  </div>
+
+  <!-- Blocs positionnés -->
+  <div 
+    *ngFor="let block of orchestration().blocks"
+    class="canvas-block"
+    [class.selected]="block.id === selectedBlockId"
+    [style.left.px]="block.position.x"
+    [style.top.px]="block.position.y"
+    (click)="selectBlock(block.id)"
+    (mousedown)="onBlockMouseDown(block.id, $event)"
+  >
+    <!-- Header -->
+    <div 
+      class="block-header"
+      [style.background-color]="getBlockColor(block.definitionId)"
+    >
+      <span class="block-icon">{{ getBlockIcon(block.definitionId) }}</span>
+      <span class="block-name">{{ block.name }}</span>
+      <button 
+        class="block-delete"
+        (click)="deleteBlock(block.id, $event)"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="block-body">
+      <span class="block-type">{{ getBlockTypeName(block.definitionId) }}</span>
+      <div class="block-config">
+        <span *ngIf="Object.keys(block.config).length === 0" class="no-config">
+          Aucune config
+        </span>
+        <div *ngFor="let key of Object.keys(block.config)" class="config-item">
+          <strong>{{ key }}:</strong> {{ block.config[key] }}
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

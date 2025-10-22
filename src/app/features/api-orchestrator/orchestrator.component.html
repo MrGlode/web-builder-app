@@ -1,0 +1,26 @@
+<!-- src/app/features/api-orchestrator/orchestrator.component.html -->
+
+<div class="orchestrator">
+  <!-- Header -->
+  <header class="orchestrator-header">
+    <div class="header-left">
+      <h1>{{ title }}</h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary">✓ Valider</button>
+      <button class="btn btn-primary">▶ Exécuter</button>
+    </div>
+  </header>
+
+  <!-- Layout -->
+  <div class="orchestrator-layout">
+    <!-- Palette -->
+    <app-orch-palette></app-orch-palette>
+
+    <!-- Canvas -->
+    <app-orch-canvas (blockSelected)="onBlockSelected($any($event))"></app-orch-canvas>
+
+    <!-- Config Panel -->
+    <app-orch-config-panel [selectedBlock]="selectedBlock()"></app-orch-config-panel>
+  </div>
+</div>

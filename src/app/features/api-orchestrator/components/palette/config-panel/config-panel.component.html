@@ -1,0 +1,78 @@
+<!-- src/app/features/api-orchestrator/components/config-panel/config-panel.component.html -->
+
+<aside class="config-panel">
+  <!-- État vide -->
+  <div *ngIf="!selectedBlock()" class="empty-state">
+    <span class="empty-icon">👆</span>
+    <p>Sélectionnez un bloc pour configurer</p>
+  </div>
+
+  <!-- Bloc sélectionné -->
+  <div *ngIf="selectedBlock() as block" class="config-content">
+    <!-- Header -->
+    <div class="config-header" [style.background-color]="getBlockColor()">
+      <span class="block-icon">{{ getBlockColor() ? '⚙️' : '' }}</span>
+      <h3>Configuration</h3>
+    </div>
+
+    <!-- Nom du bloc -->
+    <div class="config-section">
+      <label>Nom du bloc</label>
+      <input
+        type="text"
+        class="config-input"
+        [value]="block.name"
+        (change)="updateBlockName($any($event.target).value)"
+      />
+      <span class="input-hint">{{ getBlockType() }}</span>
+    </div>
+
+    <!-- Propriétés -->
+    <div class="config-section">
+      <label>Propriétés</label>
+      
+      <div class="properties-list">
+        <!-- Aucune propriété -->
+        <div *ngIf="Object.keys(block.config).length === 0" class="no-properties">
+          Aucune propriété configurée
+        </div>
+
+        <!-- Liste des propriétés -->
+        <div *ngFor="let key of Object.keys(block.config)" class="property-item">
+          <div class="property-header">
+            <span class="property-key">{{ key }}</span>
+            <button 
+              class="property-delete"
+              (click)="deleteProperty(key)"
+              title="Supprimer"
+            >
+              ×
+            </button>
+          </div>
+          <input
+            type="text"
+            class="config-input"
+            [value]="block.config[key]"
+            (change)="updateBlockProperty(key, $any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <!-- Ajouter une propriété -->
+      <div class="add-property">
+        <input
+          #newPropInput
+          type="text"
+          class="config-input"
+          placeholder="Nouvelle propriété..."
+        />
+        <button 
+          class="btn-add"
+          (click)="addProperty(newPropInput.value); newPropInput.value = ''"
+        >
+          + Ajouter
+        </button>
+      </div>
+    </div>
+  </div>
+</aside>
